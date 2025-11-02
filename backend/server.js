@@ -1,9 +1,9 @@
+require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
-const supabase = require('./config/supabase');
-require('dotenv').config();
+const connectDB = require('./config/database');
 
 const authRoutes = require('./routes/auth');
 const userRoutes = require('./routes/users');
@@ -13,6 +13,8 @@ const qualityRoutes = require('./routes/quality');
 const deliveryRoutes = require('./routes/delivery');
 const dashboardRoutes = require('./routes/dashboard');
 const toolRoutes = require('./routes/tools');
+const toolLifeRoutes = require('./routes/toolLifeTracking');
+const toolStockRoutes = require('./routes/toolStock');
 
 const app = express();
 
@@ -43,6 +45,8 @@ app.use('/api/quality', qualityRoutes);
 app.use('/api/delivery', deliveryRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/tools', toolRoutes);
+app.use('/api/tool-life', toolLifeRoutes);
+app.use('/api/tool-stock', toolStockRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {
@@ -55,10 +59,8 @@ app.use('*', (req, res) => {
   res.status(404).json({ message: 'Route not found' });
 });
 
-// Test Supabase connection
-supabase.from('users').select('count', { count: 'exact', head: true })
-  .then(() => console.log('Supabase connected successfully'))
-  .catch(err => console.error('Supabase connection error:', err));
+// Connect to MongoDB
+connectDB();
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {

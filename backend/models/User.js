@@ -13,6 +13,7 @@ const userSchema = new mongoose.Schema({
     unique: true,
     trim: true
   },
+
   password: {
     type: String,
     required: true,
@@ -39,6 +40,29 @@ const userSchema = new mongoose.Schema({
   totalAssigned: {
     type: Number,
     default: 0
+  },
+  fcmTokens: [{
+    token: {
+      type: String,
+      required: true
+    },
+    deviceId: {
+      type: String,
+      required: true
+    },
+    deviceType: {
+      type: String,
+      enum: ['android', 'ios', 'web'],
+      default: 'android'
+    },
+    lastUsed: {
+      type: Date,
+      default: Date.now
+    }
+  }],
+  pushNotificationsEnabled: {
+    type: Boolean,
+    default: true
   }
 }, {
   timestamps: true

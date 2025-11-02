@@ -1,9 +1,17 @@
-// File: lib/screens/admin_dashboard.dart
 import 'package:flutter/material.dart';
-import 'dart:async';
+import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
+
 import '../services/api_service.dart';
-//import 'login_screen.dart';
+import '../ui/app_theme.dart';
+import '../widgets/modern_button.dart';
+import '../widgets/modern_card.dart';
+import '../widgets/modern_dashboard.dart';
+import '../widgets/modern_loading.dart';
+import '../widgets/modern_search.dart';
+import 'assign_users_screen.dart';
 import 'manage_users_screen.dart';
+import 'modern_tool_management_screen.dart';
+import 'tool_life_dashboard_screen.dart';
 
 class AdminDashboard extends StatefulWidget {
   final String adminName;
@@ -11,695 +19,475 @@ class AdminDashboard extends StatefulWidget {
   const AdminDashboard({super.key, required this.adminName});
 
   @override
-  _AdminDashboardState createState() => _AdminDashboardState();
+  State<AdminDashboard> createState() => _AdminDashboardState();
 }
 
-class _AdminDashboardState extends State<AdminDashboard>
-    with TickerProviderStateMixin {
-  late AnimationController _fadeController;
-  late AnimationController _slideController;
-  late AnimationController _scaleController;
-  late Animation<double> _fadeAnimation;
-  late Animation<Offset> _slideAnimation;
-  late Animation<double> _scaleAnimation;
+class _AdminDashboardState extends State<AdminDashboard> {
+  static const double _sectionSpacing = 24;
 
-  // Counter animations for stats
-  late AnimationController _counterController;
-  late Animation<int> _unitsAnimation;
-  late Animation<double> _qualityAnimation;
-  late Animation<int> _tasksAnimation;
-  late Animation<int> _deliveriesAnimation;
+  Map<String, dynamic> _dashboardData = {};
+  bool _isLoading = true;
+  bool _hasError = false;
+  int _selectedTabIndex = 0;
+  String _searchQuery = '';
 
-  // Progress bar animations
-  late AnimationController _progressController;
-  late Animation<double> _progress1Animation;
-  late Animation<double> _progress2Animation;
-  late Animation<double> _progress3Animation;
-  late Animation<double> _progress4Animation;
+  final List<_DashboardTab> _tabs = const [
+    _DashboardTab('Overview', Icons.dashboard_customize_outlined),
+    _DashboardTab('Operations', Icons.precision_manufacturing_outlined),
+    _DashboardTab('Team', Icons.people_alt_outlined),
+    _DashboardTab('Activity', Icons.timeline_outlined),
+  ];
 
-  Map<String, dynamic> dashboardData = {};
-  
   @override
   void initState() {
     super.initState();
     _loadDashboardData();
-
-    // Initialize animation controllers
-    _fadeController = AnimationController(
-      duration: const Duration(milliseconds: 800),
-      vsync: this,
-    );
-
-    _slideController = AnimationController(
-      duration: const Duration(milliseconds: 1000),
-      vsync: this,
-    );
-
-    _scaleController = AnimationController(
-      duration: const Duration(milliseconds: 600),
-      vsync: this,
-    );
-
-    _counterController = AnimationController(
-      duration: const Duration(milliseconds: 1500),
-      vsync: this,
-    );
-
-    _progressController = AnimationController(
-      duration: const Duration(milliseconds: 2000),
-      vsync: this,
-    );
-
-    // Initialize animations
-    _fadeAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _fadeController,
-      curve: Curves.easeInOut,
-    ));
-
-    _slideAnimation = Tween<Offset>(
-      begin: const Offset(0, 0.3),
-      end: Offset.zero,
-    ).animate(CurvedAnimation(
-      parent: _slideController,
-      curve: Curves.easeOutCubic,
-    ));
-
-    _scaleAnimation = Tween<double>(
-      begin: 0.8,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _scaleController,
-      curve: Curves.elasticOut,
-    ));
-
-    // Counter animations
-    _unitsAnimation = IntTween(begin: 0, end: 1245).animate(
-      CurvedAnimation(parent: _counterController, curve: Curves.easeOut),
-    );
-    _qualityAnimation = Tween<double>(begin: 0, end: 98.5).animate(
-      CurvedAnimation(parent: _counterController, curve: Curves.easeOut),
-    );
-    _tasksAnimation = IntTween(begin: 0, end: 156).animate(
-      CurvedAnimation(parent: _counterController, curve: Curves.easeOut),
-    );
-    _deliveriesAnimation = IntTween(begin: 0, end: 23).animate(
-      CurvedAnimation(parent: _counterController, curve: Curves.easeOut),
-    );
-
-    // Progress animations
-    _progress1Animation = Tween<double>(begin: 0, end: 0.85).animate(
-      CurvedAnimation(parent: _progressController, curve: const Interval(0.0, 0.4, curve: Curves.easeOut)),
-    );
-    _progress2Animation = Tween<double>(begin: 0, end: 0.73).animate(
-      CurvedAnimation(parent: _progressController, curve: const Interval(0.2, 0.6, curve: Curves.easeOut)),
-    );
-    _progress3Animation = Tween<double>(begin: 0, end: 0.98).animate(
-      CurvedAnimation(parent: _progressController, curve: const Interval(0.4, 0.8, curve: Curves.easeOut)),
-    );
-    _progress4Animation = Tween<double>(begin: 0, end: 0.91).animate(
-      CurvedAnimation(parent: _progressController, curve: const Interval(0.6, 1.0, curve: Curves.easeOut)),
-    );
-
-    // Start animations
-    _startAnimations();
   }
-  
-  void _loadDashboardData() async {
-    try {
-      final data = await ApiService.getDashboardData('Admin');
+
+  Future<void> _loadDashboardData({bool refresh = false}) async {
+    if (!refresh) {
       setState(() {
-        dashboardData = data;
+        _isLoading = true;
+        _hasError = false;
       });
-    } catch (e) {
-      print('Failed to load dashboard data: $e');
     }
-  }
 
-  void _startAnimations() async {
-    await Future.delayed(const Duration(milliseconds: 200));
-    _fadeController.forward();
-    _slideController.forward();
-    
-    await Future.delayed(const Duration(milliseconds: 300));
-    _scaleController.forward();
-    
-    await Future.delayed(const Duration(milliseconds: 500));
-    _counterController.forward();
-    
-    await Future.delayed(const Duration(milliseconds: 800));
-    _progressController.forward();
-  }
-
-  @override
-  void dispose() {
-    _fadeController.dispose();
-    _slideController.dispose();
-    _scaleController.dispose();
-    _counterController.dispose();
-    _progressController.dispose();
-    super.dispose();
+    try {
+      final result = await ApiService.getDashboardStats();
+      if (!mounted) return;
+      setState(() {
+        _dashboardData = result;
+        _isLoading = false;
+        _hasError = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _isLoading = false;
+        if (!refresh) {
+          _hasError = true;
+        }
+      });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return Scaffold(
+        backgroundColor: AppTheme.backgroundColor,
+        body: const Center(child: ModernLoadingIndicator()),
+      );
+    }
+
+    if (_hasError) {
+      return Scaffold(
+        backgroundColor: AppTheme.backgroundColor,
+        body: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.error_outline, color: AppTheme.errorColor, size: 48),
+              const SizedBox(height: 12),
+              Text(
+                'Unable to load dashboard',
+                style: AppTheme.headlineMedium,
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 16),
+              ModernButton(
+                text: 'Retry',
+                type: ModernButtonType.primary,
+                onPressed: () => _loadDashboardData(),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    final screenWidth = MediaQuery.of(context).size.width;
+    final bool isCompact = screenWidth < 900;
+    final bool isMobile = screenWidth < 600;
+    final bool isSmall = screenWidth < 720;
+    final double horizontalPadding = isMobile ? 14 : isSmall ? 18 : 24;
+    final double topPadding = isMobile ? 14 : 24;
+    final double bottomPadding = isMobile ? 20 : 32;
+    final double sectionSpacing = isSmall ? 20 : _sectionSpacing;
+
     return Scaffold(
-      backgroundColor: Colors.grey[50],
-      body: SafeArea(
-        child: SingleChildScrollView(
+      backgroundColor: AppTheme.backgroundColor,
+      body: RefreshIndicator(
+        color: AppTheme.primaryColor,
+        onRefresh: () => _loadDashboardData(refresh: true),
+        child: SafeArea(
+          child: CustomScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            slivers: [
+              _buildAppBar(),
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: EdgeInsets.fromLTRB(horizontalPadding, topPadding, horizontalPadding, bottomPadding),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildTabSelector(isCompact),
+                      SizedBox(height: sectionSpacing),
+                      AnimatedSwitcher(
+                        duration: const Duration(milliseconds: 300),
+                        child: _buildTabContent(_selectedTabIndex, screenWidth),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  SliverAppBar _buildAppBar() {
+    final todayOverview = _dashboardData['todayOverview'] as Map<String, dynamic>? ?? {};
+    final totalUnits = _asNum(todayOverview['totalUnits']).toInt();
+    final qualityRate = _asNum(todayOverview['qualityRate']).toStringAsFixed(1);
+
+    return SliverAppBar(
+      pinned: true,
+      expandedHeight: 180,
+      elevation: 0,
+      backgroundColor: AppTheme.primaryColor,
+      flexibleSpace: FlexibleSpaceBar(
+        background: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                AppTheme.primaryColor,
+                AppTheme.primaryColor.withOpacity(0.85),
+              ],
+            ),
+          ),
           child: Padding(
-            padding: const EdgeInsets.all(20.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Animated Header Section
-                FadeTransition(
-                  opacity: _fadeAnimation,
-                  child: SlideTransition(
-                    position: _slideAnimation,
-                    child: _buildHeader(context),
-                  ),
-                ),
-                const SizedBox(height: 30),
-
-                // Animated Quick Stats Overview
-                SlideTransition(
-                  position: _slideAnimation,
-                  child: FadeTransition(
-                    opacity: _fadeAnimation,
-                    child: _buildQuickStatsSection(),
-                  ),
-                ),
-                const SizedBox(height: 30),
-
-                // Animated Operations Status Cards
-                ScaleTransition(
-                  scale: _scaleAnimation,
-                  child: _buildOperationsSection(),
-                ),
-                const SizedBox(height: 30),
-
-                // Animated Recent Activity & Performance
-                FadeTransition(
-                  opacity: _fadeAnimation,
-                  child: SlideTransition(
-                    position: _slideAnimation,
-                    child: _buildActivitySection(),
-                  ),
-                ),
-                const SizedBox(height: 30),
-
-                // Animated Action Buttons
-                ScaleTransition(
-                  scale: _scaleAnimation,
-                  child: _buildActionButtons(context),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildHeader(BuildContext context) {
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 800),
-      curve: Curves.easeInOut,
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Colors.black87, Colors.black54],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.2),
-            blurRadius: 15,
-            offset: const Offset(0, 5),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                TweenAnimationBuilder<double>(
-                  duration: const Duration(milliseconds: 1000),
-                  tween: Tween(begin: 0.0, end: 1.0),
-                  builder: (context, value, child) {
-                    return Opacity(
-                      opacity: value,
-                      child: const Text(
-                        'Welcome back,',
-                        style: TextStyle(
-                          color: Colors.white70,
-                          fontSize: 14,
-                        ),
-                      ),
-                    );
-                  },
-                ),
-                const SizedBox(height: 4),
-                TweenAnimationBuilder<double>(
-                  duration: const Duration(milliseconds: 1200),
-                  tween: Tween(begin: 0.0, end: 1.0),
-                  builder: (context, value, child) {
-                    return Transform.translate(
-                      offset: Offset(0, (1 - value) * 20),
-                      child: Opacity(
-                        opacity: value,
-                        child: Text(
-                          widget.adminName,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    );
-                  },
-                ),
-                const SizedBox(height: 8),
-                TweenAnimationBuilder<double>(
-                  duration: const Duration(milliseconds: 1400),
-                  tween: Tween(begin: 0.0, end: 1.0),
-                  builder: (context, value, child) {
-                    return Opacity(
-                      opacity: value,
-                      child: const Text(
-                        'Manufacturing Operations Dashboard',
-                        style: TextStyle(
-                          color: Colors.white70,
-                          fontSize: 12,
-                        ),
-                      ),
-                    );
-                  },
-                ),
-              ],
-            ),
-          ),
-          TweenAnimationBuilder<double>(
-            duration: const Duration(milliseconds: 1000),
-            tween: Tween(begin: 0.0, end: 1.0),
-            builder: (context, value, child) {
-              return Transform.scale(
-                scale: value,
-                child: Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.2),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    Icons.dashboard,
-                    color: Colors.white,
-                    size: 24,
-                  ),
-                ),
-              );
-            },
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildQuickStatsSection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'Today\'s Overview',
-          style: TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-            color: Colors.black87,
-          ),
-        ),
-        const SizedBox(height: 15),
-        Row(
-          children: [
-            Expanded(
-              child: AnimatedBuilder(
-                animation: _unitsAnimation,
-                builder: (context, child) {
-                  final unitsValue = _unitsAnimation.value ?? 0;
-                  return _buildQuickStatCard(
-                    unitsValue.toString(),
-                    'Total Units',
-                    Icons.inventory,
-                    Colors.blue,
-                    '+12%',
-                  );
-                },
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: AnimatedBuilder(
-                animation: _qualityAnimation,
-                builder: (context, child) {
-                  final qualityValue = _qualityAnimation.value.isNaN ? 0.0 : _qualityAnimation.value;
-                  return _buildQuickStatCard(
-                    '${qualityValue.toStringAsFixed(1)}%',
-                    'Quality Rate',
-                    Icons.verified,
-                    Colors.green,
-                    '+0.3%',
-                  );
-                },
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 12),
-        Row(
-          children: [
-            Expanded(
-              child: AnimatedBuilder(
-                animation: _tasksAnimation,
-                builder: (context, child) {
-                  final tasksValue = _tasksAnimation.value ?? 0;
-                  return _buildQuickStatCard(
-                    tasksValue.toString(),
-                    'Active Tasks',
-                    Icons.assignment,
-                    Colors.orange,
-                    '+8',
-                  );
-                },
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: AnimatedBuilder(
-                animation: _deliveriesAnimation,
-                builder: (context, child) {
-                  final deliveriesValue = _deliveriesAnimation.value ?? 0;
-                  return _buildQuickStatCard(
-                    deliveriesValue.toString(),
-                    'Deliveries',
-                    Icons.local_shipping,
-                    Colors.purple,
-                    '+5',
-                  );
-                },
-              ),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-
-  Widget _buildQuickStatCard(String value, String label, IconData icon, Color color, String change) {
-    return TweenAnimationBuilder<double>(
-      duration: const Duration(milliseconds: 600),
-      tween: Tween(begin: 0.0, end: 1.0),
-      builder: (context, animValue, child) {
-        return Transform.scale(
-          scale: 0.8 + (animValue * 0.2),
-          child: Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
-                  blurRadius: 10,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
+            padding: const EdgeInsets.fromLTRB(24, 32, 24, 16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    TweenAnimationBuilder<double>(
-                      duration: const Duration(milliseconds: 800),
-                      tween: Tween(begin: 0.0, end: 1.0),
-                      builder: (context, value, child) {
-                        return Transform.scale(
-                          scale: value,
-                          child: Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              color: color.withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(8),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Welcome back,',
+                            style: AppTheme.bodyMedium.copyWith(
+                              color: Colors.white.withOpacity(0.8),
                             ),
-                            child: Icon(icon, color: color, size: 20),
                           ),
-                        );
-                      },
-                    ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: Colors.green.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        change,
-                        style: TextStyle(
-                          color: Colors.green[700],
-                          fontSize: 10,
-                          fontWeight: FontWeight.bold,
-                        ),
+                          const SizedBox(height: 4),
+                          Text(
+                            widget.adminName,
+                            style: AppTheme.displaySmall.copyWith(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
+                    _buildProfileButton(),
                   ],
                 ),
-                const SizedBox(height: 12),
-                Text(
-                  value,
-                  style: const TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black87,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  label,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.grey[600],
-                  ),
+                const SizedBox(height: 24),
+                Row(
+                  children: [
+                    _buildSummaryChip(
+                      label: 'Total Units Today',
+                      value: totalUnits.toString(),
+                      icon: Icons.inventory_2_outlined,
+                    ),
+                    const SizedBox(width: 16),
+                    _buildSummaryChip(
+                      label: 'Quality Rate',
+                      value: '$qualityRate%',
+                      icon: Icons.verified_outlined,
+                    ),
+                  ],
                 ),
               ],
             ),
           ),
-        );
-      },
-    );
-  }
-
-  Widget _buildOperationsSection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'Operations Status',
-          style: TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-            color: Colors.black87,
+        ),
+      ),
+      bottom: PreferredSize(
+        preferredSize: const Size.fromHeight(72),
+        child: Container(
+          decoration: const BoxDecoration(
+            color: AppTheme.surfaceColor,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          padding: const EdgeInsets.fromLTRB(24, 12, 24, 16),
+          child: ModernSearchBar(
+            hintText: 'Search activity, tools, or users...',
+            onChanged: (value) {
+              setState(() {
+                _searchQuery = value;
+              });
+            },
+            suggestions: const [
+              'Tool maintenance',
+              'Quality report',
+              'User performance',
+              'Delivery status',
+            ],
           ),
         ),
-        const SizedBox(height: 15),
-        AnimatedBuilder(
-          animation: _progress1Animation,
-          builder: (context, child) {
-            return _buildOperationCard(
-              'Incoming Inspection',
-              'Active Units: 45',
-              'Avg Time: 12 min',
-              'Success Rate: 96.2%',
-              Icons.input,
-              Colors.blue,
-              85,
-              _progress1Animation.value,
-            );
-          },
-        ),
-        const SizedBox(height: 12),
-        AnimatedBuilder(
-          animation: _progress2Animation,
-          builder: (context, child) {
-            return _buildOperationCard(
-              'Finishing Operations',
-              'In Progress: 23',
-              'Completed Today: 67',
-              'Tools Status: 8/9 Working',
-              Icons.build,
-              Colors.orange,
-              73,
-              _progress2Animation.value,
-            );
-          },
-        ),
-        const SizedBox(height: 12),
-        AnimatedBuilder(
-          animation: _progress3Animation,
-          builder: (context, child) {
-            return _buildOperationCard(
-              'Quality Control',
-              'Inspected: 89',
-              'Pass Rate: 98.9%',
-              'Failed: 1 (Tolerance)',
-              Icons.verified,
-              Colors.green,
-              98,
-              _progress3Animation.value,
-            );
-          },
-        ),
-        const SizedBox(height: 12),
-        AnimatedBuilder(
-          animation: _progress4Animation,
-          builder: (context, child) {
-            return _buildOperationCard(
-              'Delivery Management',
-              'Dispatched: 23',
-              'In Transit: 12',
-              'Delivered: 145',
-              Icons.local_shipping,
-              Colors.purple,
-              91,
-              _progress4Animation.value,
-            );
-          },
-        ),
-      ],
+      ),
     );
   }
 
-  Widget _buildOperationCard(String title, String stat1, String stat2, String stat3, IconData icon, Color color, int progressValue, double animatedProgress) {
-    return TweenAnimationBuilder<double>(
-      duration: const Duration(milliseconds: 500),
-      tween: Tween(begin: 0.0, end: 1.0),
-      builder: (context, value, child) {
-        return Transform.translate(
-          offset: Offset(0, (1 - value) * 20),
-          child: Opacity(
-            opacity: value,
-            child: Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
-                    blurRadius: 10,
-                    offset: const Offset(0, 2),
-                  ),
+  Widget _buildTabSelector(bool isCompact) {
+    Widget buildTabButton(int index) {
+      final tab = _tabs[index];
+      final isSelected = index == _selectedTabIndex;
+
+      return GestureDetector(
+        onTap: () {
+          if (_selectedTabIndex != index) {
+            setState(() {
+              _selectedTabIndex = index;
+            });
+          }
+        },
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+          decoration: BoxDecoration(
+            color: isSelected
+                ? AppTheme.primaryColor.withOpacity(0.08)
+                : Colors.transparent,
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                tab.icon,
+                color: isSelected ? AppTheme.primaryColor : AppTheme.textSecondary,
+                size: 18,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                tab.title,
+                style: AppTheme.bodyMedium.copyWith(
+                  color: isSelected ? AppTheme.primaryColor : AppTheme.textSecondary,
+                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return Container(
+      decoration: BoxDecoration(
+        color: AppTheme.surfaceColor,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppTheme.borderColor),
+      ),
+      child: isCompact
+          ? SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              child: Row(
+                children: [
+                  for (var i = 0; i < _tabs.length; i++) ...[
+                    if (i != 0) const SizedBox(width: 8),
+                    SizedBox(width: 160, child: buildTabButton(i)),
+                  ],
                 ],
               ),
+            )
+          : Row(
+              children: [
+                for (var i = 0; i < _tabs.length; i++)
+                  Expanded(child: buildTabButton(i)),
+              ],
+            ),
+    );
+  }
+
+  Widget _buildTabContent(int index, double screenWidth) {
+    switch (index) {
+      case 0:
+        return _buildOverviewTab(screenWidth);
+      case 1:
+        return _buildOperationsTab(screenWidth);
+      case 2:
+        return _buildTeamTab(screenWidth);
+      case 3:
+        return _buildActivityTab(screenWidth);
+      default:
+        return const SizedBox.shrink();
+    }
+  }
+
+  Widget _buildOverviewTab(double screenWidth) {
+    final bool isTablet = screenWidth < 1024;
+    final bool isMobile = screenWidth < 680;
+    final double spacing = isMobile ? 18 : isTablet ? 22 : _sectionSpacing;
+
+    return AnimationLimiter(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: AnimationConfiguration.toStaggeredList(
+          duration: const Duration(milliseconds: 350),
+          childAnimationBuilder: (widget) => SlideAnimation(
+            verticalOffset: 24,
+            child: FadeInAnimation(child: widget),
+          ),
+          children: [
+            ModernDashboardStats(
+              stats: _buildStats(),
+              crossAxisCount: isMobile ? 1 : isTablet ? 2 : 4,
+              crossAxisSpacing: isMobile ? 12 : isTablet ? 14 : 16,
+              mainAxisSpacing: isMobile ? 12 : isTablet ? 14 : 16,
+            ),
+            SizedBox(height: spacing),
+            _buildTeamOverviewCard(isMobile),
+            SizedBox(height: spacing),
+            _buildActivityList(limit: 4),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildOperationsTab(double screenWidth) {
+    final operations = _buildOperationData();
+    return AnimationLimiter(
+      child: Column(
+        children: AnimationConfiguration.toStaggeredList(
+          duration: const Duration(milliseconds: 350),
+          childAnimationBuilder: (widget) => SlideAnimation(
+            verticalOffset: 24,
+            child: FadeInAnimation(child: widget),
+          ),
+          children: operations.map(_buildOperationCard).toList(),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTeamTab(double screenWidth) {
+    final teamOverview = _dashboardData['teamOverview'] as Map<String, dynamic>? ?? {};
+    final activeUsers = _asNum(teamOverview['activeUsers']).toInt();
+    final totalUsers = _asNum(teamOverview['totalUsers']).toInt();
+    final efficiency = _asNum(teamOverview['efficiency']).toStringAsFixed(0);
+
+    return AnimationLimiter(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: AnimationConfiguration.toStaggeredList(
+          duration: const Duration(milliseconds: 350),
+          childAnimationBuilder: (widget) => SlideAnimation(
+            verticalOffset: 24,
+            child: FadeInAnimation(child: widget),
+          ),
+          children: [
+            _buildTeamOverviewCard(screenWidth < 680),
+            const SizedBox(height: _sectionSpacing),
+            ModernCard(
+              title: 'Team Activity',
+              subtitle: 'Live workforce metrics',
               child: Column(
                 children: [
                   Row(
                     children: [
-                      TweenAnimationBuilder<double>(
-                        duration: const Duration(milliseconds: 700),
-                        tween: Tween(begin: 0.0, end: 1.0),
-                        builder: (context, animValue, child) {
-                          return Transform.scale(
-                            scale: animValue,
-                            child: Container(
-                              padding: const EdgeInsets.all(12),
-                              decoration: BoxDecoration(
-                                color: color.withOpacity(0.1),
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: Icon(icon, color: color, size: 24),
-                            ),
-                          );
-                        },
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              title,
-                              style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.black87,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              'Performance: $progressValue%',
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: Colors.grey[600],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      TweenAnimationBuilder<int>(
-                        duration: const Duration(milliseconds: 1000),
-                        tween: IntTween(begin: 0, end: progressValue),
-                        builder: (context, value, child) {
-                          final safeValue = value ?? 0;
-                          return Text(
-                            '$safeValue%',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: color,
-                            ),
-                          );
-                        },
-                      ),
+                      Expanded(child: _buildStatTile('Active Users', activeUsers.toString(), Icons.supervised_user_circle)),
+                      const SizedBox(width: 16),
+                      Expanded(child: _buildStatTile('Total Users', totalUsers.toString(), Icons.manage_accounts)),
+                      const SizedBox(width: 16),
+                      Expanded(child: _buildStatTile('Efficiency', '$efficiency%', Icons.bolt_outlined)),
                     ],
                   ),
-                  const SizedBox(height: 12),
-                  Container(
-                    width: double.infinity,
-                    height: 6,
-                    decoration: BoxDecoration(
-                      color: Colors.grey[200],
-                      borderRadius: BorderRadius.circular(3),
-                    ),
-                    child: FractionallySizedBox(
-                      alignment: Alignment.centerLeft,
-                      widthFactor: animatedProgress,
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: color,
-                          borderRadius: BorderRadius.circular(3),
+                  const SizedBox(height: 20),
+                  ModernButton(
+                    text: 'Add New User',
+                    type: ModernButtonType.secondary,
+                    icon: Icons.person_add_outlined,
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const ManageUsersScreen(),
                         ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      _buildStatItem(stat1),
-                      _buildStatItem(stat2),
-                      _buildStatItem(stat3),
-                    ],
+                      );
+                    },
                   ),
                 ],
               ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildActivityTab(double screenWidth) {
+    final operations = _buildOperationData();
+
+    return AnimationLimiter(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: AnimationConfiguration.toStaggeredList(
+          duration: const Duration(milliseconds: 350),
+          childAnimationBuilder: (widget) => SlideAnimation(
+            verticalOffset: 24,
+            child: FadeInAnimation(child: widget),
+          ),
+          children: [
+            _buildProcessPerformanceSection(operations, screenWidth),
+            const SizedBox(height: _sectionSpacing),
+            _buildActivityList(),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildProcessPerformanceSection(List<_OperationCardData> operations, double screenWidth) {
+    final bool isTablet = screenWidth < 1024;
+    final bool isMobile = screenWidth < 680;
+    final int columns = isMobile ? 1 : isTablet ? 2 : 4;
+    final double aspectRatio = isMobile ? 2.4 : isTablet ? 1.4 : 1.2;
+    final double spacing = isMobile ? 12 : isTablet ? 14 : 18;
+
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: operations.length,
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: columns,
+        crossAxisSpacing: spacing,
+        mainAxisSpacing: spacing,
+        childAspectRatio: aspectRatio,
+      ),
+      itemBuilder: (context, index) {
+        final operation = operations[index];
+        return AnimationConfiguration.staggeredGrid(
+          position: index,
+          columnCount: columns,
+          duration: const Duration(milliseconds: 400),
+          child: ScaleAnimation(
+            child: FadeInAnimation(
+              child: _buildProcessStatBlock(operation, isMobile),
             ),
           ),
         );
@@ -707,332 +495,595 @@ class _AdminDashboardState extends State<AdminDashboard>
     );
   }
 
-  Widget _buildStatItem(String text) {
-    return Expanded(
-      child: Text(
-        text,
-        style: TextStyle(
-          fontSize: 11,
-          color: Colors.grey[700],
+  Widget _buildProcessStatBlock(_OperationCardData operation, bool isMobile) {
+    final performance = _asNum(operation.data['performance']).clamp(0, 100);
+    final metrics = operation.data.entries
+        .where((entry) => entry.key.toString() != 'performance')
+        .map((metric) => MapEntry(
+              _formatKey(metric.key),
+              _formatValue(metric.value),
+            ))
+        .toList();
+    final highlight = metrics.isNotEmpty ? metrics.first : null;
+
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            operation.color.withOpacity(0.9),
+            operation.color.withOpacity(0.65),
+          ],
         ),
-        textAlign: TextAlign.center,
+        borderRadius: BorderRadius.circular(isMobile ? 20 : 24),
+        boxShadow: [
+          BoxShadow(
+            color: operation.color.withOpacity(0.25),
+            blurRadius: isMobile ? 16 : 24,
+            offset: const Offset(0, 12),
+          ),
+        ],
       ),
-    );
-  }
-
-  Widget _buildActivitySection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'Recent Activity',
-          style: TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-            color: Colors.black87,
-          ),
-        ),
-        const SizedBox(height: 15),
-        Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(12),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.05),
-                blurRadius: 10,
-                offset: const Offset(0, 2),
-              ),
-            ],
-          ),
-          child: Column(
-            children: [
-              _buildActivityItem(
-                'Quality Control Failed',
-                'Part ID: QC-2024-001 exceeded tolerance',
-                '2 min ago',
-                Colors.red,
-                Icons.error,
-              ),
-              const Divider(height: 20),
-              _buildActivityItem(
-                'Delivery Completed',
-                'Order #DEL-445 delivered successfully',
-                '15 min ago',
-                Colors.green,
-                Icons.check_circle,
-              ),
-              const Divider(height: 20),
-              _buildActivityItem(
-                'Tool Maintenance Alert',
-                'AMS-141 COLUMN requires attention',
-                '32 min ago',
-                Colors.orange,
-                Icons.warning,
-              ),
-              const Divider(height: 20),
-              _buildActivityItem(
-                'Inspection Completed',
-                'Batch #IN-2024-098 passed inspection',
-                '1 hour ago',
-                Colors.blue,
-                Icons.done_all,
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildActivityItem(String title, String subtitle, String time, Color color, IconData icon) {
-    return TweenAnimationBuilder<double>(
-      duration: const Duration(milliseconds: 600),
-      tween: Tween(begin: 0.0, end: 1.0),
-      builder: (context, value, child) {
-        return Transform.translate(
-          offset: Offset((1 - value) * 50, 0),
-          child: Opacity(
-            opacity: value,
-            child: Row(
+      child: Padding(
+        padding: EdgeInsets.all(isMobile ? 16 : 20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Container(
-                  padding: const EdgeInsets.all(8),
+                  width: isMobile ? 38 : 44,
+                  height: isMobile ? 38 : 44,
                   decoration: BoxDecoration(
-                    color: color.withOpacity(0.1),
-                    shape: BoxShape.circle,
+                    color: Colors.white.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(isMobile ? 12 : 14),
                   ),
-                  child: Icon(icon, color: color, size: 16),
+                  child: Icon(operation.icon, color: Colors.white, size: isMobile ? 18 : 22),
                 ),
-                const SizedBox(width: 12),
+                SizedBox(width: isMobile ? 12 : 14),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        title,
-                        style: const TextStyle(
-                          fontSize: 14,
+                        operation.title,
+                        style: (isMobile ? AppTheme.headlineMedium : AppTheme.headlineSmall).copyWith(
+                          color: Colors.white,
                           fontWeight: FontWeight.w600,
-                          color: Colors.black87,
                         ),
                       ),
-                      const SizedBox(height: 2),
-                      Text(
-                        subtitle,
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey[600],
+                      if (highlight != null)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 4),
+                          child: Text(
+                            '${highlight.value} ${highlight.key}',
+                            style: AppTheme.bodySmall.copyWith(
+                              color: Colors.white.withOpacity(0.8),
+                            ),
+                          ),
                         ),
-                      ),
                     ],
                   ),
                 ),
                 Text(
-                  time,
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: Colors.grey[500],
+                  '${performance.toStringAsFixed(0)}%',
+                  style: (isMobile ? AppTheme.headlineMedium : AppTheme.headlineSmall).copyWith(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
               ],
             ),
-          ),
-        );
-      },
+            SizedBox(height: isMobile ? 14 : 18),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(999),
+              child: LinearProgressIndicator(
+                value: performance / 100,
+                minHeight: isMobile ? 6 : 8,
+                backgroundColor: Colors.white.withOpacity(0.2),
+                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+              ),
+            ),
+            if (metrics.length > 1)
+              Padding(
+                padding: EdgeInsets.only(top: isMobile ? 14 : 18),
+                child: Wrap(
+                  spacing: 12,
+                  runSpacing: 12,
+                  children: metrics
+                      .skip(1)
+                      .map(
+                        (metric) => _buildProcessMetricPill(
+                          metric.key,
+                          metric.value,
+                          isMobile,
+                        ),
+                      )
+                      .toList(),
+                ),
+              ),
+          ],
+        ),
+      ),
     );
   }
 
-  Widget _buildActionButtons(BuildContext context) {
-    return Column(
-      children: [
-        // Manage Users Button
-        Container(
-          width: double.infinity,
-          margin: const EdgeInsets.only(bottom: 12),
-          child: TweenAnimationBuilder<double>(
-            duration: const Duration(milliseconds: 800),
-            tween: Tween(begin: 0.0, end: 1.0),
-            builder: (context, value, child) {
-              return Transform.scale(
-                scale: 0.9 + (value * 0.1),
-                child: ElevatedButton.icon(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => ManageUsersScreen()),
-                    );
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.black87,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    elevation: 2,
-                    shadowColor: Colors.black.withOpacity(0.3),
-                  ),
-                  icon: const Icon(Icons.people_outline, size: 20),
-                  label: const Text(
-                    'Manage Users',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
+  Widget _buildProcessMetricPill(String label, String value, bool isMobile) {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: isMobile ? 12 : 14, vertical: isMobile ? 6 : 8),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.18),
+        borderRadius: BorderRadius.circular(isMobile ? 10 : 12),
+      ),
+      child: RichText(
+        text: TextSpan(
+          children: [
+            TextSpan(
+              text: '$value  ',
+              style: AppTheme.bodyMedium.copyWith(
+                color: Colors.white,
+                fontWeight: FontWeight.w600,
+                fontSize: isMobile ? 13 : null,
+              ),
+            ),
+            TextSpan(
+              text: label,
+              style: AppTheme.bodySmall.copyWith(
+                color: Colors.white.withOpacity(0.8),
+                fontSize: isMobile ? 11 : null,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  ModernCard _buildTeamOverviewCard(bool isMobile) {
+    final teamOverview = _dashboardData['teamOverview'] as Map<String, dynamic>? ?? {};
+    final activeUsers = _asNum(teamOverview['activeUsers']).toInt();
+    final totalUsers = _asNum(teamOverview['totalUsers']).toInt();
+    final efficiency = _asNum(teamOverview['efficiency']).toDouble();
+
+    final metricWidgets = [
+      _buildMetricPill('Active Users', activeUsers.toString(), AppTheme.primaryColor, isMobile),
+      _buildMetricPill('Total Users', totalUsers.toString(), AppTheme.infoColor, isMobile),
+      _buildMetricPill('Efficiency', '${efficiency.toStringAsFixed(0)}%', AppTheme.successColor, isMobile),
+    ];
+
+    return ModernCard(
+      title: 'Team Overview',
+      subtitle: 'Live productivity snapshot',
+      child: Column(
+        children: [
+          if (isMobile)
+            Column(
+              children: [
+                for (var i = 0; i < metricWidgets.length; i++) ...[
+                  if (i != 0) const SizedBox(height: 12),
+                  metricWidgets[i],
+                ],
+              ],
+            )
+          else
+            Row(
+              children: [
+                Expanded(child: metricWidgets[0]),
+                const SizedBox(width: 12),
+                Expanded(child: metricWidgets[1]),
+                const SizedBox(width: 12),
+                Expanded(child: metricWidgets[2]),
+              ],
+            ),
+          SizedBox(height: isMobile ? 16 : 20),
+          LinearProgressIndicator(
+            value: efficiency.clamp(0, 100) / 100,
+            minHeight: isMobile ? 5 : 6,
+            backgroundColor: AppTheme.borderColor,
+            valueColor: AlwaysStoppedAnimation<Color>(AppTheme.successColor),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildActivityList({int? limit}) {
+    final activities = _filteredActivities();
+    final visibleActivities = limit != null && activities.length > limit
+        ? activities.take(limit).toList()
+        : activities;
+
+    return ModernCard(
+      title: 'Recent Activity',
+      subtitle: limit != null ? 'Latest updates across operations' : 'Full activity timeline',
+      trailing: limit != null
+          ? TextButton(
+              onPressed: () {
+                setState(() {
+                  _selectedTabIndex = 3;
+                });
+              },
+              child: const Text('View All'),
+            )
+          : null,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final bool isCompact = constraints.maxWidth < 540;
+          final bool isSingleColumn = constraints.maxWidth < 720;
+
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: visibleActivities.map((activity) {
+              final color = _parseColor(activity['color']);
+              final icon = _parseIcon(activity['icon']);
+              final title = activity['type']?.toString() ?? '';
+              final description = activity['description']?.toString() ?? '';
+              final time = _formatRelativeTime(activity['time']);
+
+              return Container(
+                margin: const EdgeInsets.only(bottom: 16),
+                decoration: BoxDecoration(
+                  border: Border.all(color: AppTheme.borderColor),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Padding(
+                  padding: EdgeInsets.all(isCompact ? 12 : 16),
+                  child: isSingleColumn
+                      ? Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Container(
+                                  width: 40,
+                                  height: 40,
+                                  decoration: BoxDecoration(
+                                    color: color.withOpacity(0.12),
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: Icon(icon, color: color, size: 18),
+                                ),
+                                const SizedBox(width: 14),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        title,
+                                        style: AppTheme.headlineSmall,
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        time,
+                                        style: AppTheme.bodySmall.copyWith(color: AppTheme.textTertiary),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 12),
+                            Text(
+                              description,
+                              style: AppTheme.bodyMedium.copyWith(color: AppTheme.textSecondary),
+                            ),
+                          ],
+                        )
+                      : Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Container(
+                              width: 44,
+                              height: 44,
+                              decoration: BoxDecoration(
+                                color: color.withOpacity(0.12),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Icon(icon, color: color, size: 20),
+                            ),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    title,
+                                    style: AppTheme.headlineSmall,
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    description,
+                                    style: AppTheme.bodyMedium.copyWith(color: AppTheme.textSecondary),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Text(
+                              time,
+                              style: AppTheme.bodySmall.copyWith(color: AppTheme.textTertiary),
+                            ),
+                          ],
+                        ),
                 ),
               );
-            },
+            }).toList(),
+          );
+        },
+      ),
+    );
+  }
+
+  List<DashboardStat> _buildStats() {
+    final todayOverview = _dashboardData['todayOverview'] as Map<String, dynamic>? ?? {};
+
+    return [
+      DashboardStat(
+        title: 'Total Units',
+        subtitle: 'Completed today',
+        value: _asNum(todayOverview['totalUnits']),
+        icon: Icons.inventory_outlined,
+        color: AppTheme.primaryColor,
+      ),
+      DashboardStat(
+        title: 'Quality Rate',
+        subtitle: 'Inspection success',
+        value: _asNum(todayOverview['qualityRate']),
+        icon: Icons.verified_outlined,
+        color: AppTheme.successColor,
+        isDecimal: true,
+      ),
+      DashboardStat(
+        title: 'Active Tasks',
+        subtitle: 'Across production',
+        value: _asNum(todayOverview['activeTasks']),
+        icon: Icons.assignment_outlined,
+        color: AppTheme.warningColor,
+      ),
+      DashboardStat(
+        title: 'Deliveries',
+        subtitle: 'Dispatched today',
+        value: _asNum(todayOverview['deliveries']),
+        icon: Icons.local_shipping_outlined,
+        color: AppTheme.infoColor,
+      ),
+    ];
+  }
+
+  List<_OperationCardData> _buildOperationData() {
+    final operations = _dashboardData['operationsStatus'] as Map<String, dynamic>? ?? {};
+
+    return [
+      _OperationCardData(
+        title: 'Incoming Inspection',
+        icon: Icons.fact_check_outlined,
+        color: AppTheme.primaryColor,
+        data: Map<String, dynamic>.from(operations['incomingInspection'] ?? {}),
+      ),
+      _OperationCardData(
+        title: 'Finishing',
+        icon: Icons.precision_manufacturing_outlined,
+        color: AppTheme.warningColor,
+        data: Map<String, dynamic>.from(operations['finishing'] ?? {}),
+      ),
+      _OperationCardData(
+        title: 'Quality Control',
+        icon: Icons.verified_user_outlined,
+        color: AppTheme.successColor,
+        data: Map<String, dynamic>.from(operations['qualityControl'] ?? {}),
+      ),
+      _OperationCardData(
+        title: 'Delivery',
+        icon: Icons.local_shipping_outlined,
+        color: AppTheme.infoColor,
+        data: Map<String, dynamic>.from(operations['delivery'] ?? {}),
+      ),
+    ];
+  }
+
+  Widget _buildOperationCard(_OperationCardData operation) {
+    final performance = _asNum(operation.data['performance']).toDouble();
+    final metrics = operation.data.entries
+        .where((entry) => entry.key.toString() != 'performance')
+        .map((entry) => MapEntry(_formatKey(entry.key), _formatValue(entry.value)))
+        .toList();
+
+    return ModernCard(
+      leading: Container(
+        width: 48,
+        height: 48,
+        decoration: BoxDecoration(
+          color: operation.color.withOpacity(0.12),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Icon(operation.icon, color: operation.color, size: 22),
+      ),
+      title: operation.title,
+      subtitle: 'Performance ${performance.toStringAsFixed(0)}%',
+      child: Column(
+        children: [
+          const SizedBox(height: 16),
+          LinearProgressIndicator(
+            value: performance.clamp(0, 100) / 100,
+            minHeight: 6,
+            backgroundColor: AppTheme.borderColor,
+            valueColor: AlwaysStoppedAnimation<Color>(operation.color),
+          ),
+          const SizedBox(height: 20),
+          Wrap(
+            spacing: 12,
+            runSpacing: 12,
+            children: metrics
+                .map(
+                  (metric) => _buildMetricChip(metric.key, metric.value, operation.color.withOpacity(0.15)),
+                )
+                .toList(),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMetricChip(String label, String value, Color background) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(
+        color: background,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: RichText(
+        text: TextSpan(
+          children: [
+            TextSpan(
+              text: '$value  ',
+              style: AppTheme.headlineSmall,
+            ),
+            TextSpan(
+              text: label,
+              style: AppTheme.bodySmall,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMetricPill(String label, String value, Color color, bool isMobile) {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: isMobile ? 14 : 16, vertical: isMobile ? 12 : 14),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.08),
+        borderRadius: BorderRadius.circular(isMobile ? 14 : 16),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            value,
+            style: (isMobile ? AppTheme.headlineMedium : AppTheme.headlineLarge).copyWith(color: color, fontWeight: FontWeight.bold),
+          ),
+          SizedBox(height: isMobile ? 2 : 4),
+          Text(
+            label,
+            style: AppTheme.bodySmall.copyWith(color: AppTheme.textSecondary, fontSize: isMobile ? 12 : null),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatTile(String label, String value, IconData icon) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppTheme.backgroundColor,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppTheme.borderColor),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 42,
+            height: 42,
+            decoration: BoxDecoration(
+              color: AppTheme.primaryLight.withOpacity(0.15),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(icon, color: AppTheme.primaryColor, size: 20),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  value,
+                  style: AppTheme.headlineMedium,
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  label,
+                  style: AppTheme.bodySmall.copyWith(color: AppTheme.textSecondary),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  PopupMenuButton<String> _buildProfileButton() {
+    return PopupMenuButton<String>(
+      icon: CircleAvatar(
+        radius: 20,
+        backgroundColor: Colors.white.withOpacity(0.2),
+        child: Text(
+          widget.adminName.isNotEmpty ? widget.adminName[0].toUpperCase() : 'A',
+          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+        ),
+      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      onSelected: _handleMenuSelection,
+      itemBuilder: (context) => [
+        PopupMenuItem<String>(
+          value: 'profile',
+          child: Row(
+            children: [
+              Icon(Icons.person_outline, color: AppTheme.textSecondary),
+              const SizedBox(width: 12),
+              Text('Profile', style: AppTheme.bodyMedium),
+            ],
           ),
         ),
-        
-        // Download Reports Button
-        SizedBox(
-          width: double.infinity,
-          child: TweenAnimationBuilder<double>(
-            duration: const Duration(milliseconds: 1000),
-            tween: Tween(begin: 0.0, end: 1.0),
-            builder: (context, value, child) {
-              return Transform.scale(
-                scale: 0.9 + (value * 0.1),
-                child: ElevatedButton.icon(
-                  onPressed: () => _showReportsDialog(context),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.white,
-                    foregroundColor: Colors.black87,
-                    side: BorderSide(color: Colors.grey[300]!, width: 1),
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    elevation: 2,
-                    shadowColor: Colors.black.withOpacity(0.1),
-                  ),
-                  icon: const Icon(Icons.download, size: 20),
-                  label: const Text(
-                    'Download Monthly Reports',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-              );
-            },
+        PopupMenuItem<String>(
+          value: 'settings',
+          child: Row(
+            children: [
+              Icon(Icons.settings_outlined, color: AppTheme.textSecondary),
+              const SizedBox(width: 12),
+              Text('Settings', style: AppTheme.bodyMedium),
+            ],
+          ),
+        ),
+        const PopupMenuDivider(),
+        PopupMenuItem<String>(
+          value: 'logout',
+          child: Row(
+            children: [
+              Icon(Icons.logout, color: AppTheme.errorColor),
+              const SizedBox(width: 12),
+              Text(
+                'Logout',
+                style: AppTheme.bodyMedium.copyWith(color: AppTheme.errorColor),
+              ),
+            ],
           ),
         ),
       ],
     );
   }
 
-  void _showReportsDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return TweenAnimationBuilder<double>(
-          duration: const Duration(milliseconds: 300),
-          tween: Tween(begin: 0.0, end: 1.0),
-          builder: (context, value, child) {
-            return Transform.scale(
-              scale: 0.8 + (value * 0.2),
-              child: AlertDialog(
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                title: const Row(
-                  children: [
-                    Icon(Icons.analytics, color: Colors.blue),
-                    SizedBox(width: 8),
-                    Text(
-                      'Monthly Reports',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 18,
-                      ),
-                    ),
-                  ],
-                ),
-                content: SingleChildScrollView(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        'Select the type of report you want to download:',
-                        style: TextStyle(color: Colors.grey[600]),
-                      ),
-                      const SizedBox(height: 20),
-                      _buildReportOption(
-                        'Operations Summary',
-                        'Complete overview of all operations',
-                        Icons.summarize,
-                        Colors.blue,
-                        () => _downloadReport('operations'),
-                      ),
-                      const SizedBox(height: 12),
-                      _buildReportOption(
-                        'Quality Control Report',
-                        'Detailed QC metrics and trends',
-                        Icons.verified,
-                        Colors.green,
-                        () => _downloadReport('quality'),
-                      ),
-                      const SizedBox(height: 12),
-                      _buildReportOption(
-                        'Production Analytics',
-                        'Manufacturing performance data',
-                        Icons.trending_up,
-                        Colors.orange,
-                        () => _downloadReport('production'),
-                      ),
-                      const SizedBox(height: 12),
-                      _buildReportOption(
-                        'User Performance',
-                        'Team productivity and task completion',
-                        Icons.people,
-                        Colors.purple,
-                        () => _downloadReport('users'),
-                      ),
-                    ],
-                  ),
-                ),
-                actions: [
-                  TextButton(
-                    onPressed: () => Navigator.of(context).pop(),
-                    child: Text(
-                      'Cancel',
-                      style: TextStyle(color: Colors.grey[600]),
-                    ),
-                  ),
-                ],
-              ),
-            );
-          },
-        );
-      },
-    );
-  }
-
-  Widget _buildReportOption(String title, String subtitle, IconData icon, Color color, VoidCallback onTap) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(8),
+  Widget _buildSummaryChip({required String label, required String value, required IconData icon}) {
+    return Expanded(
       child: Container(
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          border: Border.all(color: Colors.grey[300]!),
-          borderRadius: BorderRadius.circular(8),
+          color: Colors.white.withOpacity(0.15),
+          borderRadius: BorderRadius.circular(16),
         ),
         child: Row(
           children: [
             Container(
-              padding: const EdgeInsets.all(8),
+              width: 40,
+              height: 40,
               decoration: BoxDecoration(
-                color: color.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(8),
+                color: Colors.white.withOpacity(0.18),
+                borderRadius: BorderRadius.circular(12),
               ),
-              child: Icon(icon, color: color, size: 20),
+              child: Icon(icon, color: Colors.white, size: 20),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -1040,119 +1091,173 @@ class _AdminDashboardState extends State<AdminDashboard>
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    title,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 14,
+                    value,
+                    style: AppTheme.headlineMedium.copyWith(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
+                  const SizedBox(height: 4),
                   Text(
-                    subtitle,
-                    style: TextStyle(
-                      color: Colors.grey[600],
-                      fontSize: 12,
+                    label,
+                    style: AppTheme.bodySmall.copyWith(
+                      color: Colors.white.withOpacity(0.75),
                     ),
                   ),
                 ],
               ),
             ),
-            Icon(Icons.download, color: Colors.grey[400], size: 20),
           ],
         ),
       ),
     );
   }
 
-  void _downloadReport(String reportType) {
-    Navigator.of(context).pop(); // Close dialog
-    
-    // Show loading animation
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (BuildContext context) {
-        return Center(
-          child: Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: const Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                CircularProgressIndicator(
-                  valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
-                ),
-                SizedBox(height: 16),
-                Text(
-                  'Generating Report...',
-                  style: TextStyle(
-                    fontWeight: FontWeight.w500,
-                    color: Colors.black87,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-
-    // Simulate download process
-    Timer(const Duration(seconds: 2), () {
-      Navigator.of(context).pop(); // Close loading dialog
-      
-      // Show success message
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Row(
-            children: [
-              const Icon(Icons.download_done, color: Colors.white),
-              const SizedBox(width: 8),
-              Text('${_getReportName(reportType)} downloaded successfully!'),
-            ],
-          ),
-          backgroundColor: Colors.green,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
-          ),
-          duration: const Duration(seconds: 3),
-          action: SnackBarAction(
-            label: 'View',
-            textColor: Colors.white,
-            onPressed: () {
-              // In real app, this would open the downloaded file
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('Opening ${_getReportName(reportType)}...'),
-                  backgroundColor: Colors.blue,
-                  behavior: SnackBarBehavior.floating,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
-              );
-            },
-          ),
-        ),
-      );
-    });
-  }
-
-  String _getReportName(String reportType) {
-    switch (reportType) {
-      case 'operations':
-        return 'Operations Summary Report';
-      case 'quality':
-        return 'Quality Control Report';
-      case 'production':
-        return 'Production Analytics Report';
-      case 'users':
-        return 'User Performance Report';
-      default:
-        return 'Monthly Report';
+  void _handleMenuSelection(String value) {
+    switch (value) {
+      case 'profile':
+        Navigator.of(context).pushNamed('/profile');
+        break;
+      case 'settings':
+        Navigator.of(context).pushNamed('/settings');
+        break;
+      case 'logout':
+        Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
+        break;
     }
   }
+
+  List<Map<String, dynamic>> _filteredActivities() {
+    final rawActivities = _dashboardData['recentActivity'] as List<dynamic>? ?? [];
+    final activities = rawActivities
+        .whereType<Map<String, dynamic>>()
+        .map((activity) => Map<String, dynamic>.from(activity))
+        .toList();
+
+    if (_searchQuery.isEmpty) {
+      return activities;
+    }
+
+    final query = _searchQuery.toLowerCase();
+    return activities.where((activity) {
+      final title = activity['type']?.toString().toLowerCase() ?? '';
+      final description = activity['description']?.toString().toLowerCase() ?? '';
+      return title.contains(query) || description.contains(query);
+    }).toList();
+  }
+
+  double _asNum(dynamic value) {
+    if (value is num) {
+      return value.toDouble();
+    }
+    if (value is String) {
+      return double.tryParse(value) ?? 0;
+    }
+    return 0;
+  }
+
+  String _formatKey(Object key) {
+    final text = key.toString();
+    final buffer = StringBuffer();
+    for (var i = 0; i < text.length; i++) {
+      final char = text[i];
+      if (i == 0) {
+        buffer.write(char.toUpperCase());
+      } else if (char.toUpperCase() == char && char != '_') {
+        buffer.write(' ');
+        buffer.write(char);
+      } else if (char == '_') {
+        buffer.write(' ');
+      } else {
+        buffer.write(char);
+      }
+    }
+    return buffer.toString();
+  }
+
+  String _formatValue(dynamic value) {
+    if (value is num) {
+      return value % 1 == 0 ? value.toInt().toString() : value.toStringAsFixed(1);
+    }
+    if (value is String) {
+      return value;
+    }
+    return value?.toString() ?? '';
+  }
+
+  Color _parseColor(dynamic value) {
+    final text = value?.toString().toLowerCase() ?? '';
+    switch (text) {
+      case 'red':
+        return AppTheme.errorColor;
+      case 'green':
+        return AppTheme.successColor;
+      case 'orange':
+      case 'amber':
+        return AppTheme.warningColor;
+      case 'blue':
+        return AppTheme.infoColor;
+      default:
+        return AppTheme.primaryColor;
+    }
+  }
+
+  IconData _parseIcon(dynamic value) {
+    switch (value) {
+      case 'error':
+        return Icons.error_outline;
+      case 'check_circle':
+        return Icons.check_circle_outline;
+      case 'warning':
+        return Icons.warning_amber_outlined;
+      case 'info':
+        return Icons.info_outline;
+      default:
+        return Icons.notifications_outlined;
+    }
+  }
+
+  String _formatRelativeTime(dynamic value) {
+    DateTime? time;
+    if (value is DateTime) {
+      time = value;
+    } else if (value is String) {
+      time = DateTime.tryParse(value);
+    }
+    if (time == null) {
+      return '';
+    }
+    final difference = DateTime.now().difference(time);
+    if (difference.inMinutes < 1) {
+      return 'just now';
+    }
+    if (difference.inMinutes < 60) {
+      return '${difference.inMinutes}m ago';
+    }
+    if (difference.inHours < 24) {
+      return '${difference.inHours}h ago';
+    }
+    return '${difference.inDays}d ago';
+  }
+}
+
+class _DashboardTab {
+  final String title;
+  final IconData icon;
+
+  const _DashboardTab(this.title, this.icon);
+}
+
+class _OperationCardData {
+  final String title;
+  final IconData icon;
+  final Color color;
+  final Map<String, dynamic> data;
+
+  const _OperationCardData({
+    required this.title,
+    required this.icon,
+    required this.color,
+    required this.data,
+  });
 }

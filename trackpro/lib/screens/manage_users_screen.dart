@@ -1,6 +1,9 @@
 // File: lib/screens/manage_users_screen.dart
 import 'package:flutter/material.dart';
+import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 import '../services/api_service.dart';
+import '../ui/app_theme.dart';
+import '../widgets/modern_card.dart';
 
 class ManageUsersScreen extends StatefulWidget {
   const ManageUsersScreen({super.key});
@@ -12,6 +15,13 @@ class ManageUsersScreen extends StatefulWidget {
 class _ManageUsersScreenState extends State<ManageUsersScreen> with TickerProviderStateMixin {
   late TabController _tabController;
   
+  final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _usernameController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  
+  final List<String> _roles = ['User', 'Supervisor', 'Admin'];
+  String _selectedRole = 'User';
+  
   // Sample user data - in real app, this would come from a database
   List<User> users = [
     User(
@@ -21,8 +31,8 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> with TickerProvid
       role: 'Supervisor',
       isActive: true,
       todayTasks: [
-        Task('Incoming Inspection', 'Batch #IN-2024-098', 'Completed', Colors.green),
-        Task('Quality Control', 'Part ID: QC-2024-045', 'In Progress', Colors.orange),
+        Task('Incoming Inspection', 'Batch #IN-2024-098', 'Completed', AppTheme.successColor),
+        Task('Quality Control', 'Part ID: QC-2024-045', 'In Progress', AppTheme.warningColor),
       ],
       completedToday: 8,
       totalAssigned: 12,
@@ -34,47 +44,51 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> with TickerProvid
       role: 'User',
       isActive: true,
       todayTasks: [
-        Task('Finishing Operations', 'AMS-141 COLUMN', 'In Progress', Colors.blue),
-        Task('Delivery Management', 'Order #DEL-445', 'Completed', Colors.green),
-        Task('Incoming Inspection', 'Component Check', 'Pending', Colors.grey),
+        Task('Finishing Operations', 'AMS-141 COLUMN', 'In Progress', AppTheme.primaryColor),
+        Task('Delivery Management', 'Order #DEL-445', 'Completed', AppTheme.successColor),
+        Task('Incoming Inspection', 'Component Check', 'Pending', AppTheme.subtitleColor),
       ],
       completedToday: 6,
       totalAssigned: 9,
     ),
     User(
       id: '003',
-      name: 'Mike Wilson',
-      username: 'mike.wilson',
+      name: 'Mike Rodriguez',
+      username: 'mike.rodriguez',
       role: 'User',
       isActive: false,
-      todayTasks: [
-        Task('Quality Control', 'Final Inspection', 'Paused', Colors.red),
-      ],
-      completedToday: 3,
-      totalAssigned: 8,
+      todayTasks: [],
+      completedToday: 0,
+      totalAssigned: 0,
     ),
     User(
       id: '004',
-      name: 'Emily Davis',
-      username: 'emily.davis',
+      name: 'Emily Chen',
+      username: 'emily.chen',
+      role: 'Admin',
+      isActive: true,
+      todayTasks: [
+        Task('Management', 'Weekly Reports', 'In Progress', AppTheme.primaryColor),
+        Task('Quality Review', 'System Check', 'Completed', AppTheme.successColor),
+      ],
+      completedToday: 4,
+      totalAssigned: 6,
+    ),
+    User(
+      id: '005',
+      name: 'David Wilson',
+      username: 'david.wilson',
       role: 'Supervisor',
       isActive: true,
       todayTasks: [
-        Task('Delivery Management', 'Route Planning', 'Completed', Colors.green),
-        Task('Quality Control', 'Tolerance Check', 'Completed', Colors.green),
-        Task('Incoming Inspection', 'Supplier Audit', 'In Progress', Colors.orange),
+        Task('Training', 'New Employee Orientation', 'Completed', AppTheme.successColor),
+        Task('Quality Control', 'Final Inspection', 'In Progress', AppTheme.warningColor),
+        Task('Documentation', 'Process Updates', 'Pending', AppTheme.subtitleColor),
       ],
-      completedToday: 11,
-      totalAssigned: 14,
+      completedToday: 5,
+      totalAssigned: 8,
     ),
   ];
-
-  // Add user form controllers
-  final TextEditingController _nameController = TextEditingController();
-  final TextEditingController _usernameController = TextEditingController();
-  final TextEditingController _passwordController = TextEditingController();
-  String _selectedRole = 'User';
-  final List<String> _roles = ['Admin', 'Supervisor', 'User'];
 
   @override
   void initState() {
@@ -86,35 +100,39 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> with TickerProvid
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[50],
+      backgroundColor: AppTheme.backgroundColor,
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: () => Navigator.pop(context),
+          icon: Icon(Icons.arrow_back, color: AppTheme.primaryColor),
+          onPressed: () => Navigator.of(context).pop(),
         ),
-        title: const Text(
+        title: Text(
           'Manage Users',
-          style: TextStyle(
-            color: Colors.black,
+          style: AppTheme.headingStyle.copyWith(
+            color: AppTheme.primaryColor,
             fontSize: 20,
-            fontWeight: FontWeight.bold,
           ),
         ),
         bottom: TabBar(
           controller: _tabController,
-          labelColor: Colors.black,
-          unselectedLabelColor: Colors.grey[600],
-          indicatorColor: Colors.black,
+          labelColor: AppTheme.primaryColor,
+          unselectedLabelColor: AppTheme.subtitleColor,
+          indicatorColor: AppTheme.primaryColor,
+          indicatorWeight: 3,
+          labelStyle: AppTheme.subtitleStyle.copyWith(
+            fontWeight: FontWeight.w600,
+            fontSize: 14,
+          ),
           tabs: const [
             Tab(
-              icon: Icon(Icons.people),
-              text: 'User List',
+              icon: Icon(Icons.people_outline),
+              text: 'Team Overview',
             ),
             Tab(
-              icon: Icon(Icons.person_add),
-              text: 'Add User',
+              icon: Icon(Icons.person_add_outlined),
+              text: 'Add Member',
             ),
           ],
         ),
@@ -132,26 +150,94 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> with TickerProvid
   Widget _buildUserListTab() {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Summary Cards
-          _buildSummarySection(),
-          const SizedBox(height: 25),
-          
-          // Users List
-          const Text(
-            'Team Members',
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: Colors.black87,
+      child: AnimationLimiter(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: AnimationConfiguration.toStaggeredList(
+            duration: const Duration(milliseconds: 375),
+            childAnimationBuilder: (widget) => SlideAnimation(
+              horizontalOffset: 50.0,
+              child: FadeInAnimation(
+                child: widget,
+              ),
             ),
+            children: [
+              // Welcome Header
+              ModernCard(
+                child: Container(
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        AppTheme.primaryColor.withOpacity(0.1),
+                        AppTheme.accentColor.withOpacity(0.05),
+                      ],
+                    ),
+                  ),
+                  padding: const EdgeInsets.all(24),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Team Management',
+                        style: AppTheme.headingStyle.copyWith(
+                          fontSize: 20,
+                          color: AppTheme.primaryColor,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Monitor team performance and manage user roles',
+                        style: AppTheme.subtitleStyle,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 25),
+              
+              // Summary Cards
+              _buildSummarySection(),
+              const SizedBox(height: 25),
+              
+              // Users List
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          AppTheme.primaryColor,
+                          AppTheme.accentColor,
+                        ],
+                      ),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Icon(
+                      Icons.group,
+                      color: Colors.white,
+                      size: 20,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Text(
+                    'Team Members',
+                    style: AppTheme.headingStyle.copyWith(
+                      fontSize: 18,
+                      color: AppTheme.primaryColor,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 15),
+              
+              ...users.map((user) => _buildUserCard(user)),
+            ],
           ),
-          const SizedBox(height: 15),
-          
-          ...users.map((user) => _buildUserCard(user)).toList(),
-        ],
+        ),
       ),
     );
   }
@@ -165,13 +251,34 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> with TickerProvid
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Team Overview',
-          style: TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-            color: Colors.black87,
-          ),
+        Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    AppTheme.primaryColor,
+                    AppTheme.accentColor,
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Icon(
+                Icons.analytics_outlined,
+                color: Colors.white,
+                size: 20,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Text(
+              'Team Overview',
+              style: AppTheme.headingStyle.copyWith(
+                fontSize: 18,
+                color: AppTheme.primaryColor,
+              ),
+            ),
+          ],
         ),
         const SizedBox(height: 15),
         Row(
@@ -180,8 +287,8 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> with TickerProvid
               child: _buildSummaryCard(
                 'Active Users',
                 '$activeUsers/$totalUsers',
-                Icons.people,
-                Colors.green,
+                Icons.people_outline,
+                AppTheme.successColor,
               ),
             ),
             const SizedBox(width: 12),
@@ -189,8 +296,8 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> with TickerProvid
               child: _buildSummaryCard(
                 'Tasks Today',
                 '$totalTasksCompleted/$totalTasksAssigned',
-                Icons.assignment,
-                Colors.blue,
+                Icons.assignment_outlined,
+                AppTheme.primaryColor,
               ),
             ),
           ],
@@ -202,8 +309,8 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> with TickerProvid
               child: _buildSummaryCard(
                 'Supervisors',
                 '${users.where((u) => u.role == 'Supervisor').length}',
-                Icons.supervisor_account,
-                Colors.purple,
+                Icons.supervisor_account_outlined,
+                AppTheme.accentColor,
               ),
             ),
             const SizedBox(width: 12),
@@ -212,7 +319,7 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> with TickerProvid
                 'Efficiency',
                 '${totalTasksAssigned > 0 ? ((totalTasksCompleted / totalTasksAssigned) * 100).toInt() : 0}%',
                 Icons.trending_up,
-                Colors.orange,
+                AppTheme.warningColor,
               ),
             ),
           ],
@@ -222,223 +329,259 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> with TickerProvid
   }
 
   Widget _buildSummaryCard(String title, String value, IconData icon, Color color) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: color.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(8),
+    return ModernCard(
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        color.withOpacity(0.8),
+                        color,
+                      ],
+                    ),
+                    borderRadius: BorderRadius.circular(8),
+                    boxShadow: [
+                      BoxShadow(
+                        color: color.withOpacity(0.3),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Icon(icon, color: Colors.white, size: 20),
                 ),
-                child: Icon(icon, color: color, size: 20),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Text(
+              value,
+              style: AppTheme.headingStyle.copyWith(
+                fontSize: 18,
+                color: AppTheme.primaryColor,
               ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Text(
-            value,
-            style: const TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: Colors.black87,
             ),
-          ),
-          const SizedBox(height: 2),
-          Text(
-            title,
-            style: TextStyle(
-              fontSize: 12,
-              color: Colors.grey[600],
+            const SizedBox(height: 2),
+            Text(
+              title,
+              style: AppTheme.subtitleStyle.copyWith(
+                fontSize: 12,
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildUserCard(User user) {
-    return Container(
+    return ModernCard(
       margin: const EdgeInsets.only(bottom: 16),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          // User Header
-          Row(
-            children: [
-              CircleAvatar(
-                radius: 25,
-                backgroundColor: user.isActive ? Colors.green[100] : Colors.grey[300],
-                child: Text(
-                  user.name.split(' ').map((n) => n[0]).join(''),
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: user.isActive ? Colors.green[700] : Colors.grey[600],
-                  ),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Text(
-                          user.name,
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black87,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: user.isActive ? Colors.green[100] : Colors.grey[200],
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Text(
-                            user.isActive ? 'Active' : 'Inactive',
-                            style: TextStyle(
-                              fontSize: 10,
-                              color: user.isActive ? Colors.green[700] : Colors.grey[600],
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      ],
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          children: [
+            // User Header
+            Row(
+              children: [
+                Container(
+                  width: 50,
+                  height: 50,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: user.isActive 
+                          ? [AppTheme.successColor.withOpacity(0.8), AppTheme.successColor]
+                          : [AppTheme.subtitleColor.withOpacity(0.8), AppTheme.subtitleColor],
                     ),
-                    const SizedBox(height: 2),
-                    Text(
-                      '@${user.username}',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey[600],
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: (user.isActive ? AppTheme.successColor : AppTheme.subtitleColor).withOpacity(0.3),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Center(
+                    child: Text(
+                      user.name.split(' ').map((n) => n[0]).join(''),
+                      style: AppTheme.headingStyle.copyWith(
+                        color: Colors.white,
+                        fontSize: 16,
                       ),
                     ),
-                  ],
+                  ),
                 ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Text(
+                            user.name,
+                            style: AppTheme.headingStyle.copyWith(
+                              fontSize: 16,
+                              color: AppTheme.primaryColor,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: user.isActive ? AppTheme.successColor.withOpacity(0.1) : AppTheme.subtitleColor.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: user.isActive ? AppTheme.successColor : AppTheme.subtitleColor,
+                                width: 1,
+                              ),
+                            ),
+                            child: Text(
+                              user.isActive ? 'Active' : 'Inactive',
+                              style: AppTheme.captionStyle.copyWith(
+                                color: user.isActive ? AppTheme.successColor : AppTheme.subtitleColor,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        '@${user.username}',
+                        style: AppTheme.subtitleStyle,
+                      ),
+                    ],
+                  ),
+                ),
+                // Role Dropdown
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: AppTheme.primaryColor.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: AppTheme.primaryColor.withOpacity(0.2)),
+                  ),
+                  child: DropdownButtonHideUnderline(
+                    child: DropdownButton<String>(
+                      value: user.role,
+                      style: AppTheme.subtitleStyle.copyWith(fontSize: 12),
+                      onChanged: (String? newRole) {
+                        setState(() {
+                          user.role = newRole!;
+                        });
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text('${user.name}\'s role updated to $newRole'),
+                            backgroundColor: AppTheme.successColor,
+                            duration: const Duration(seconds: 2),
+                          ),
+                        );
+                      },
+                      items: _roles.map<DropdownMenuItem<String>>((String value) {
+                        return DropdownMenuItem<String>(
+                          value: value,
+                          child: Text(value),
+                        );
+                      }).toList(),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            
+            const SizedBox(height: 16),
+            
+            // Progress Bar
+            Row(
+              children: [
+                Text(
+                  'Today\'s Progress: ${user.completedToday}/${user.totalAssigned}',
+                  style: AppTheme.subtitleStyle.copyWith(
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const Spacer(),
+                Text(
+                  '${user.totalAssigned > 0 ? ((user.completedToday / user.totalAssigned) * 100).toInt() : 0}%',
+                  style: AppTheme.headingStyle.copyWith(
+                    fontSize: 12,
+                    color: AppTheme.primaryColor,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Container(
+              height: 6,
+              width: double.infinity,
+              decoration: BoxDecoration(
+                color: AppTheme.subtitleColor.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(3),
               ),
-              // Role Dropdown
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  border: Border.all(color: Colors.grey[300]!),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: DropdownButtonHideUnderline(
-                  child: DropdownButton<String>(
-                    value: user.role,
-                    style: const TextStyle(fontSize: 12, color: Colors.black87),
-                    onChanged: (String? newRole) {
-                      setState(() {
-                        user.role = newRole!;
-                      });
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text('${user.name}\'s role updated to $newRole'),
-                          backgroundColor: Colors.blue,
-                          duration: const Duration(seconds: 2),
-                        ),
-                      );
-                    },
-                    items: _roles.map<DropdownMenuItem<String>>((String value) {
-                      return DropdownMenuItem<String>(
-                        value: value,
-                        child: Text(value),
-                      );
-                    }).toList(),
+              child: FractionallySizedBox(
+                alignment: Alignment.centerLeft,
+                widthFactor: user.totalAssigned > 0 ? user.completedToday / user.totalAssigned : 0.0,
+                child: Container(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        user.totalAssigned > 0 && user.completedToday / user.totalAssigned > 0.8 
+                            ? AppTheme.successColor
+                            : user.totalAssigned > 0 && user.completedToday / user.totalAssigned > 0.5 
+                                ? AppTheme.warningColor
+                                : AppTheme.accentColor,
+                        user.totalAssigned > 0 && user.completedToday / user.totalAssigned > 0.8 
+                            ? AppTheme.successColor.withOpacity(0.8)
+                            : user.totalAssigned > 0 && user.completedToday / user.totalAssigned > 0.5 
+                                ? AppTheme.warningColor.withOpacity(0.8)
+                                : AppTheme.accentColor.withOpacity(0.8),
+                      ],
+                    ),
+                    borderRadius: BorderRadius.circular(3),
+                    boxShadow: [
+                      BoxShadow(
+                        color: (user.totalAssigned > 0 && user.completedToday / user.totalAssigned > 0.8 
+                            ? AppTheme.successColor
+                            : user.totalAssigned > 0 && user.completedToday / user.totalAssigned > 0.5 
+                                ? AppTheme.warningColor
+                                : AppTheme.accentColor).withOpacity(0.3),
+                        blurRadius: 4,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
                   ),
                 ),
               ),
-            ],
-          ),
-          
-          const SizedBox(height: 16),
-          
-          // Progress Bar
-          Row(
-            children: [
-              Text(
-                'Today\'s Progress: ${user.completedToday}/${user.totalAssigned}',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Colors.grey[700],
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-              const Spacer(),
-              Text(
-                '${user.totalAssigned > 0 ? ((user.completedToday / user.totalAssigned) * 100).toInt() : 0}%',
-                style: const TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black87,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          LinearProgressIndicator(
-            value: user.totalAssigned > 0 ? user.completedToday / user.totalAssigned : 0.0,
-            backgroundColor: Colors.grey[200],
-            valueColor: AlwaysStoppedAnimation<Color>(
-              user.totalAssigned > 0 && user.completedToday / user.totalAssigned > 0.8 
-                  ? Colors.green 
-                  : user.totalAssigned > 0 && user.completedToday / user.totalAssigned > 0.5 
-                      ? Colors.orange 
-                      : Colors.red,
             ),
-          ),
-          
-          const SizedBox(height: 16),
-          
-          // Today's Tasks
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Today\'s Tasks',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black87,
+            
+            const SizedBox(height: 16),
+            
+            // Today's Tasks
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Today\'s Tasks',
+                  style: AppTheme.headingStyle.copyWith(
+                    fontSize: 14,
+                    color: AppTheme.primaryColor,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 8),
-              ...user.todayTasks.map((task) => _buildTaskItem(task)).toList(),
-            ],
-          ),
-        ],
+                const SizedBox(height: 8),
+                ...user.todayTasks.map((task) => _buildTaskItem(task)),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -449,35 +592,49 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> with TickerProvid
       child: Row(
         children: [
           Container(
-            width: 6,
-            height: 6,
+            width: 8,
+            height: 8,
             decoration: BoxDecoration(
-              color: task.statusColor,
+              gradient: LinearGradient(
+                colors: [task.statusColor.withOpacity(0.8), task.statusColor],
+              ),
               shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: task.statusColor.withOpacity(0.3),
+                  blurRadius: 4,
+                  offset: const Offset(0, 1),
+                ),
+              ],
             ),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: 12),
           Expanded(
             child: Text(
               '${task.type}: ${task.description}',
-              style: TextStyle(
-                fontSize: 12,
-                color: Colors.grey[700],
-              ),
+              style: AppTheme.bodyStyle,
             ),
           ),
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             decoration: BoxDecoration(
-              color: task.statusColor.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(8),
+              gradient: LinearGradient(
+                colors: [
+                  task.statusColor.withOpacity(0.1),
+                  task.statusColor.withOpacity(0.05),
+                ],
+              ),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: task.statusColor.withOpacity(0.3),
+                width: 1,
+              ),
             ),
             child: Text(
               task.status,
-              style: TextStyle(
-                fontSize: 10,
+              style: AppTheme.captionStyle.copyWith(
                 color: task.statusColor,
-                fontWeight: FontWeight.bold,
+                fontWeight: FontWeight.w600,
               ),
             ),
           ),
@@ -489,152 +646,255 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> with TickerProvid
   Widget _buildAddUserTab() {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Add New Team Member',
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: Colors.black87,
+      child: AnimationLimiter(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: AnimationConfiguration.toStaggeredList(
+            duration: const Duration(milliseconds: 375),
+            childAnimationBuilder: (widget) => SlideAnimation(
+              horizontalOffset: 50.0,
+              child: FadeInAnimation(
+                child: widget,
+              ),
             ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Fill in the details below to add a new user to your team',
-            style: TextStyle(
-              fontSize: 14,
-              color: Colors.grey[600],
-            ),
-          ),
-          const SizedBox(height: 30),
-
-          Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
-                  blurRadius: 10,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: Column(
-              children: [
-                _buildInputField('Full Name', _nameController, 'Enter full name'),
-                const SizedBox(height: 20),
-                _buildInputField('Username', _usernameController, 'Enter username'),
-                const SizedBox(height: 20),
-                _buildInputField('Password', _passwordController, 'Enter password', isPassword: true),
-                const SizedBox(height: 20),
-                
-                // Role Selection
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Role',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                        color: Colors.grey[700],
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                      decoration: BoxDecoration(
-                        border: Border.all(color: Colors.grey[300]!),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: DropdownButtonHideUnderline(
-                        child: DropdownButton<String>(
-                          value: _selectedRole,
-                          onChanged: (String? newValue) {
-                            setState(() {
-                              _selectedRole = newValue!;
-                            });
-                          },
-                          items: _roles.map<DropdownMenuItem<String>>((String value) {
-                            return DropdownMenuItem<String>(
-                              value: value,
-                              child: Text(value),
-                            );
-                          }).toList(),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                
-                const SizedBox(height: 30),
-                
-                // Add Button
-                SizedBox(
+            children: [
+              // Header
+              ModernCard(
+                child: Container(
                   width: double.infinity,
-                  height: 50,
-                  child: ElevatedButton(
-                    onPressed: _addUser,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.black87,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
-                    child: const Text(
-                      'Add Team Member',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                      ),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        AppTheme.accentColor.withOpacity(0.1),
+                        AppTheme.primaryColor.withOpacity(0.05),
+                      ],
                     ),
                   ),
+                  padding: const EdgeInsets.all(24),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [
+                                  AppTheme.accentColor,
+                                  AppTheme.primaryColor,
+                                ],
+                              ),
+                              borderRadius: BorderRadius.circular(12),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: AppTheme.accentColor.withOpacity(0.3),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            child: const Icon(
+                              Icons.person_add_outlined,
+                              color: Colors.white,
+                              size: 24,
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Add New Team Member',
+                                  style: AppTheme.headingStyle.copyWith(
+                                    fontSize: 20,
+                                    color: AppTheme.primaryColor,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  'Fill in the details below to add a new user to your team',
+                                  style: AppTheme.subtitleStyle,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
-              ],
-            ),
+              ),
+              const SizedBox(height: 30),
+
+              ModernCard(
+                child: Container(
+                  padding: const EdgeInsets.all(24),
+                  child: Column(
+                    children: [
+                      _buildInputField('Full Name', _nameController, 'Enter full name', Icons.person_outline),
+                      const SizedBox(height: 20),
+                      _buildInputField('Username', _usernameController, 'Enter username', Icons.alternate_email),
+                      const SizedBox(height: 20),
+                      _buildInputField('Password', _passwordController, 'Enter password', Icons.lock_outline, isPassword: true),
+                      const SizedBox(height: 20),
+                      
+                      // Role Selection
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Icon(
+                                Icons.badge_outlined,
+                                color: AppTheme.primaryColor,
+                                size: 20,
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                'Role',
+                                style: AppTheme.headingStyle.copyWith(
+                                  fontSize: 14,
+                                  color: AppTheme.primaryColor,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: AppTheme.primaryColor.withOpacity(0.05),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: AppTheme.primaryColor.withOpacity(0.2)),
+                            ),
+                            child: DropdownButtonHideUnderline(
+                              child: DropdownButton<String>(
+                                value: _selectedRole,
+                                onChanged: (String? newValue) {
+                                  setState(() {
+                                    _selectedRole = newValue!;
+                                  });
+                                },
+                                items: _roles.map<DropdownMenuItem<String>>((String value) {
+                                  return DropdownMenuItem<String>(
+                                    value: value,
+                                    child: Text(
+                                      value,
+                                      style: AppTheme.bodyStyle,
+                                    ),
+                                  );
+                                }).toList(),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      
+                      const SizedBox(height: 30),
+                      
+                      // Add Button
+                      Container(
+                        width: double.infinity,
+                        height: 50,
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [AppTheme.primaryColor, AppTheme.accentColor],
+                          ),
+                          borderRadius: BorderRadius.circular(12),
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppTheme.primaryColor.withOpacity(0.3),
+                              blurRadius: 8,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: ElevatedButton(
+                          onPressed: _addUser,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.transparent,
+                            shadowColor: Colors.transparent,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Icon(
+                                Icons.person_add,
+                                color: Colors.white,
+                                size: 20,
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                'Add Team Member',
+                                style: AppTheme.buttonTextStyle,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
 
-  Widget _buildInputField(String label, TextEditingController controller, String hint, {bool isPassword = false}) {
+  Widget _buildInputField(String label, TextEditingController controller, String hint, IconData icon, {bool isPassword = false}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w500,
-            color: Colors.grey[700],
-          ),
+        Row(
+          children: [
+            Icon(
+              icon,
+              color: AppTheme.primaryColor,
+              size: 20,
+            ),
+            const SizedBox(width: 8),
+            Text(
+              label,
+              style: AppTheme.headingStyle.copyWith(
+                fontSize: 14,
+                color: AppTheme.primaryColor,
+              ),
+            ),
+          ],
         ),
         const SizedBox(height: 8),
         TextField(
           controller: controller,
           obscureText: isPassword,
+          style: AppTheme.bodyStyle,
           decoration: InputDecoration(
             hintText: hint,
+            hintStyle: AppTheme.subtitleStyle,
+            filled: true,
+            fillColor: AppTheme.primaryColor.withOpacity(0.05),
             border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: BorderSide(color: Colors.grey[300]!),
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: AppTheme.primaryColor.withOpacity(0.2)),
             ),
             enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: BorderSide(color: Colors.grey[300]!),
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: AppTheme.primaryColor.withOpacity(0.2)),
             ),
             focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: Colors.black),
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: AppTheme.primaryColor, width: 2),
             ),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
           ),
         ),
       ],
@@ -657,7 +917,11 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> with TickerProvid
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('${_nameController.text} added successfully!'),
-            backgroundColor: Colors.green,
+            backgroundColor: AppTheme.successColor,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
           ),
         );
         
@@ -676,15 +940,23 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> with TickerProvid
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(result['message']),
-            backgroundColor: Colors.red,
+            backgroundColor: AppTheme.accentColor,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
           ),
         );
       }
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please fill all fields'),
-          backgroundColor: Colors.red,
+        SnackBar(
+          content: const Text('Please fill all fields'),
+          backgroundColor: AppTheme.accentColor,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
         ),
       );
     }
@@ -707,7 +979,14 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> with TickerProvid
       });
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to load users: $e')),
+        SnackBar(
+          content: Text('Failed to load users: $e'),
+          backgroundColor: AppTheme.accentColor,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
+        ),
       );
     }
   }

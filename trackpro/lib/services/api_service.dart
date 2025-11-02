@@ -1,11 +1,12 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class ApiService {
-  static const String baseUrl = 'http://localhost:3000/api';
+  static const String baseUrl = 'http://localhost:3001/api';
   static final supabase = Supabase.instance.client;
   
   // Get stored token
@@ -184,7 +185,16 @@ class ApiService {
       
       // Add image if provided
       if (image != null) {
-        request.files.add(await http.MultipartFile.fromPath('image', image.path));
+        if (kIsWeb) {
+          final bytes = await image.readAsBytes();
+          request.files.add(http.MultipartFile.fromBytes(
+            'image',
+            bytes,
+            filename: 'inspection_${DateTime.now().millisecondsSinceEpoch}.png',
+          ));
+        } else {
+          request.files.add(await http.MultipartFile.fromPath('image', image.path));
+        }
       }
       
       final streamedResponse = await request.send();
@@ -223,6 +233,28 @@ class ApiService {
     }
   }
   
+  // Update finishing record
+  static Future<Map<String, dynamic>> updateFinishing(String id, Map<String, dynamic> finishingData) async {
+    try {
+      final headers = await getHeaders();
+      final response = await http.put(
+        Uri.parse('$baseUrl/finishing/$id'),
+        headers: headers,
+        body: jsonEncode(finishingData),
+      );
+      
+      final data = jsonDecode(response.body);
+      
+      if (response.statusCode == 200) {
+        return {'success': true, 'finishing': data};
+      } else {
+        return {'success': false, 'message': data['message'] ?? 'Finishing record update failed'};
+      }
+    } catch (e) {
+      return {'success': false, 'message': 'Network error: $e'};
+    }
+  }
+  
   // Create quality control record
   static Future<Map<String, dynamic>> createQualityControl(Map<String, dynamic> qcData, {File? signature}) async {
     try {
@@ -246,7 +278,16 @@ class ApiService {
       
       // Add signature if provided
       if (signature != null) {
-        request.files.add(await http.MultipartFile.fromPath('signatureImage', signature.path));
+        if (kIsWeb) {
+          final bytes = await signature.readAsBytes();
+          request.files.add(http.MultipartFile.fromBytes(
+            'signatureImage',
+            bytes,
+            filename: 'signature_${DateTime.now().millisecondsSinceEpoch}.png',
+          ));
+        } else {
+          request.files.add(await http.MultipartFile.fromPath('signatureImage', signature.path));
+        }
       }
       
       final streamedResponse = await request.send();
@@ -279,7 +320,16 @@ class ApiService {
       
       // Add proof image if provided
       if (proofImage != null) {
-        request.files.add(await http.MultipartFile.fromPath('deliveryProofImage', proofImage.path));
+        if (kIsWeb) {
+          final bytes = await proofImage.readAsBytes();
+          request.files.add(http.MultipartFile.fromBytes(
+            'deliveryProofImage',
+            bytes,
+            filename: 'delivery_proof_${DateTime.now().millisecondsSinceEpoch}.png',
+          ));
+        } else {
+          request.files.add(await http.MultipartFile.fromPath('deliveryProofImage', proofImage.path));
+        }
       }
       
       final streamedResponse = await request.send();
@@ -328,6 +378,16 @@ class ApiService {
     }
   }
   
+  // Get dashboard stats for admin
+  static Future<Map<String, dynamic>> getDashboardStats() async {
+    return await getDashboardData('admin');
+  }
+
+  // Get dashboard stats for supervisor
+  static Future<Map<String, dynamic>> getSupervisorDashboardStats() async {
+    return await getDashboardData('supervisor');
+  }
+
   // Get reports
   static Future<Map<String, dynamic>> getReport(String type, {String? startDate, String? endDate}) async {
     try {
@@ -353,29 +413,74 @@ class ApiService {
     }
   }
   
-  // Upload Excel tool list
-  static Future<Map<String, dynamic>> uploadToolList(String toolName, File excelFile) async {
+  // Upload CSV tool list
+  static Future<Map<String, dynamic>> uploadToolList({
+    required String toolName,
+    List<int>? csvFileBytes,
+    String? csvFilePath,
+    String? sheetType,
+    String? sheetDisplayName,
+    bool overwrite = false,
+  }) async {
     try {
       final token = await getToken();
       final uri = Uri.parse('$baseUrl/tools/upload');
-      
-      var request = http.MultipartRequest('POST', uri);
-      request.headers['Authorization'] = 'Bearer $token';
-      
+
+      final request = http.MultipartRequest('POST', uri);
+      if (token != null) {
+        request.headers['Authorization'] = 'Bearer $token';
+      }
+
       request.fields['toolName'] = toolName;
-      request.files.add(await http.MultipartFile.fromPath('excel', excelFile.path));
-      
+      request.fields['overwrite'] = overwrite.toString();
+
+      if (sheetType != null && sheetType.trim().isNotEmpty) {
+        request.fields['sheetType'] = sheetType.trim();
+      }
+      if (sheetDisplayName != null && sheetDisplayName.trim().isNotEmpty) {
+        request.fields['sheetDisplayName'] = sheetDisplayName.trim();
+      }
+
+      if (csvFileBytes != null) {
+        request.files.add(http.MultipartFile.fromBytes(
+          'csv',
+          csvFileBytes,
+          filename: sheetDisplayName ?? '$toolName.csv',
+        ));
+      } else if (csvFilePath != null && csvFilePath.isNotEmpty) {
+        request.files.add(await http.MultipartFile.fromPath('csv', csvFilePath));
+      } else {
+        return {
+          'success': false,
+          'message': 'No CSV file data provided for upload.',
+        };
+      }
+
       final streamedResponse = await request.send();
       final response = await http.Response.fromStream(streamedResponse);
       final data = jsonDecode(response.body);
-      
-      if (response.statusCode == 201) {
-        return {'success': true, 'toolList': data['toolList']};
-      } else {
-        return {'success': false, 'message': data['message'] ?? 'Upload failed'};
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return {
+          'success': true,
+          'toolList': data['data']?['toolList'] ?? data['toolList'],
+          'sheets': data['data']?['sheets'],
+          'totals': data['data']?['totals'],
+          'message': data['message'],
+          'statusCode': response.statusCode,
+        };
       }
+
+      return {
+        'success': false,
+        'message': data['message'] ?? 'Upload failed',
+        'statusCode': response.statusCode,
+      };
     } catch (e) {
-      return {'success': false, 'message': 'Network error: $e'};
+      return {
+        'success': false,
+        'message': 'Network error: $e',
+      };
     }
   }
   
@@ -402,8 +507,9 @@ class ApiService {
   static Future<Map<String, dynamic>> getToolListByName(String toolName) async {
     try {
       final headers = await getHeaders();
+      final encodedToolName = Uri.encodeComponent(toolName);
       final response = await http.get(
-        Uri.parse('$baseUrl/tools/$toolName'),
+        Uri.parse('$baseUrl/tools/name/$encodedToolName'),
         headers: headers,
       );
       
@@ -433,6 +539,321 @@ class ApiService {
       }
     } catch (e) {
       throw Exception('Network error: $e');
+    }
+  }
+  
+  // Get active tool life alerts
+  static Future<Map<String, dynamic>> getActiveToolAlerts() async {
+    try {
+      final headers = await getHeaders();
+      final response = await http.get(
+        Uri.parse('$baseUrl/tool-life/alerts/active'),
+        headers: headers,
+      );
+      
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return {'success': true, 'alerts': data['data']['alerts'] ?? []};
+      } else {
+        return {'success': false, 'alerts': []};
+      }
+    } catch (e) {
+      return {'success': false, 'alerts': []};
+    }
+  }
+  
+  // Record tool usage
+  static Future<Map<String, dynamic>> recordToolUsage({
+    required int toolId,
+    required String componentId,
+    required int noOfHoles,
+    required double cuttingLength,
+  }) async {
+    try {
+      final headers = await getHeaders();
+      final response = await http.post(
+        Uri.parse('$baseUrl/tool-life/usage/record'),
+        headers: headers,
+        body: jsonEncode({
+          'tool_id': toolId,
+          'component_id': componentId,
+          'no_of_holes': noOfHoles,
+          'cutting_length': cuttingLength,
+        }),
+      );
+      
+      final data = jsonDecode(response.body);
+      return data;
+    } catch (e) {
+      return {'success': false, 'message': 'Network error: $e'};
+    }
+  }
+  
+  // Get tool status
+  static Future<Map<String, dynamic>> getToolStatus(int toolId) async {
+    try {
+      final headers = await getHeaders();
+      final response = await http.get(
+        Uri.parse('$baseUrl/tool-life/$toolId/status'),
+        headers: headers,
+      );
+      
+      final data = jsonDecode(response.body);
+      return data;
+    } catch (e) {
+      return {'success': false, 'message': 'Network error: $e'};
+    }
+  }
+
+  // ==================== TOOL STOCK MANAGEMENT ====================
+
+  // Get all tool stocks
+  static Future<Map<String, dynamic>> getToolStocks({
+    int page = 1,
+    int limit = 20,
+    String? search,
+  }) async {
+    try {
+      final headers = await getHeaders();
+      String url = '$baseUrl/tool-stock?page=$page&limit=$limit';
+      
+      if (search != null && search.isNotEmpty) {
+        url += '&search=${Uri.encodeComponent(search)}';
+      }
+      
+      final response = await http.get(
+        Uri.parse(url),
+        headers: headers,
+      );
+      
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      } else {
+        throw Exception('Failed to fetch tool stocks');
+      }
+    } catch (e) {
+      throw Exception('Network error: $e');
+    }
+  }
+
+  // Get low stock items
+  static Future<Map<String, dynamic>> getLowStockItems() async {
+    try {
+      final headers = await getHeaders();
+      final response = await http.get(
+        Uri.parse('$baseUrl/tool-stock/low-stock'),
+        headers: headers,
+      );
+      
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      } else {
+        throw Exception('Failed to fetch low stock items');
+      }
+    } catch (e) {
+      throw Exception('Network error: $e');
+    }
+  }
+
+  // Get stock statistics
+  static Future<Map<String, dynamic>> getStockStatistics() async {
+    try {
+      final headers = await getHeaders();
+      final response = await http.get(
+        Uri.parse('$baseUrl/tool-stock/statistics'),
+        headers: headers,
+      );
+      
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      } else {
+        throw Exception('Failed to fetch stock statistics');
+      }
+    } catch (e) {
+      throw Exception('Network error: $e');
+    }
+  }
+
+  // Get single tool stock
+  static Future<Map<String, dynamic>> getToolStock(String stockId) async {
+    try {
+      final headers = await getHeaders();
+      final response = await http.get(
+        Uri.parse('$baseUrl/tool-stock/$stockId'),
+        headers: headers,
+      );
+      
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      } else {
+        throw Exception('Tool stock not found');
+      }
+    } catch (e) {
+      throw Exception('Network error: $e');
+    }
+  }
+
+  // Create new tool stock
+  static Future<Map<String, dynamic>> createToolStock({
+    required String toolName,
+    String atcPocketNo = '',
+    String toolRoomNo = '',
+    required int currentStock,
+    int minimumStock = 5,
+    int maximumStock = 50,
+    int reorderLevel = 10,
+    int reorderQuantity = 20,
+    String unit = 'pieces',
+    String location = 'Tool Room',
+    double costPerUnit = 0,
+    String notes = '',
+  }) async {
+    try {
+      final headers = await getHeaders();
+      final response = await http.post(
+        Uri.parse('$baseUrl/tool-stock'),
+        headers: headers,
+        body: jsonEncode({
+          'toolName': toolName,
+          'atcPocketNo': atcPocketNo,
+          'toolRoomNo': toolRoomNo,
+          'currentStock': currentStock,
+          'minimumStock': minimumStock,
+          'maximumStock': maximumStock,
+          'reorderLevel': reorderLevel,
+          'reorderQuantity': reorderQuantity,
+          'unit': unit,
+          'location': location,
+          'costPerUnit': costPerUnit,
+          'notes': notes,
+        }),
+      );
+      
+      final data = jsonDecode(response.body);
+      
+      if (response.statusCode == 201) {
+        return {'success': true, 'data': data};
+      } else {
+        return {'success': false, 'message': data['message'] ?? 'Failed to create tool stock'};
+      }
+    } catch (e) {
+      return {'success': false, 'message': 'Network error: $e'};
+    }
+  }
+
+  // Update tool stock
+  static Future<Map<String, dynamic>> updateToolStock(
+    String stockId, {
+    String? toolName,
+    String? atcPocketNo,
+    String? toolRoomNo,
+    int? currentStock,
+    int? minimumStock,
+    int? maximumStock,
+    int? reorderLevel,
+    int? reorderQuantity,
+    String? unit,
+    String? location,
+    double? costPerUnit,
+    String? notes,
+  }) async {
+    try {
+      final headers = await getHeaders();
+      
+      final body = <String, dynamic>{};
+      if (toolName != null) body['toolName'] = toolName;
+      if (atcPocketNo != null) body['atcPocketNo'] = atcPocketNo;
+      if (toolRoomNo != null) body['toolRoomNo'] = toolRoomNo;
+      if (currentStock != null) body['currentStock'] = currentStock;
+      if (minimumStock != null) body['minimumStock'] = minimumStock;
+      if (maximumStock != null) body['maximumStock'] = maximumStock;
+      if (reorderLevel != null) body['reorderLevel'] = reorderLevel;
+      if (reorderQuantity != null) body['reorderQuantity'] = reorderQuantity;
+      if (unit != null) body['unit'] = unit;
+      if (location != null) body['location'] = location;
+      if (costPerUnit != null) body['costPerUnit'] = costPerUnit;
+      if (notes != null) body['notes'] = notes;
+      
+      final response = await http.put(
+        Uri.parse('$baseUrl/tool-stock/$stockId'),
+        headers: headers,
+        body: jsonEncode(body),
+      );
+      
+      final data = jsonDecode(response.body);
+      
+      if (response.statusCode == 200) {
+        return {'success': true, 'data': data};
+      } else {
+        return {'success': false, 'message': data['message'] ?? 'Failed to update tool stock'};
+      }
+    } catch (e) {
+      return {'success': false, 'message': 'Network error: $e'};
+    }
+  }
+
+  // Delete tool stock
+  static Future<Map<String, dynamic>> deleteToolStock(String stockId) async {
+    try {
+      final headers = await getHeaders();
+      final response = await http.delete(
+        Uri.parse('$baseUrl/tool-stock/$stockId'),
+        headers: headers,
+      );
+      
+      final data = jsonDecode(response.body);
+      
+      if (response.statusCode == 200) {
+        return {'success': true, 'message': data['message'] ?? 'Tool stock deleted'};
+      } else {
+        return {'success': false, 'message': data['message'] ?? 'Failed to delete tool stock'};
+      }
+    } catch (e) {
+      return {'success': false, 'message': 'Network error: $e'};
+    }
+  }
+
+  // Add stock
+  static Future<Map<String, dynamic>> addStock(String stockId, int quantity) async {
+    try {
+      final headers = await getHeaders();
+      final response = await http.post(
+        Uri.parse('$baseUrl/tool-stock/$stockId/add-stock'),
+        headers: headers,
+        body: jsonEncode({'quantity': quantity}),
+      );
+      
+      final data = jsonDecode(response.body);
+      
+      if (response.statusCode == 200) {
+        return {'success': true, 'data': data};
+      } else {
+        return {'success': false, 'message': data['message'] ?? 'Failed to add stock'};
+      }
+    } catch (e) {
+      return {'success': false, 'message': 'Network error: $e'};
+    }
+  }
+
+  // Remove stock
+  static Future<Map<String, dynamic>> removeStock(String stockId, int quantity) async {
+    try {
+      final headers = await getHeaders();
+      final response = await http.post(
+        Uri.parse('$baseUrl/tool-stock/$stockId/remove-stock'),
+        headers: headers,
+        body: jsonEncode({'quantity': quantity}),
+      );
+      
+      final data = jsonDecode(response.body);
+      
+      if (response.statusCode == 200) {
+        return {'success': true, 'data': data};
+      } else {
+        return {'success': false, 'message': data['message'] ?? 'Failed to remove stock'};
+      }
+    } catch (e) {
+      return {'success': false, 'message': 'Network error: $e'};
     }
   }
 }

@@ -1,6 +1,9 @@
 // File: lib/screens/assign_users_screen.dart
 import 'package:flutter/material.dart';
+import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 import '../services/api_service.dart';
+import '../ui/app_theme.dart';
+import '../widgets/modern_card.dart';
 
 class User {
   final String id;
@@ -27,13 +30,29 @@ class _AssignUsersScreenState extends State<AssignUsersScreen> {
   List<User> users = [];
   bool isLoading = true;
 
-  // Available tasks
-  final List<String> availableTasks = [
-    'Incoming Inspection',
-    'Finishing',
-    'Quality Control',
-    'Delivery'
-  ];
+  // Available tasks with colors
+  final Map<String, Map<String, dynamic>> availableTasks = {
+    'Incoming Inspection': {
+      'icon': Icons.input_outlined,
+      'color': AppTheme.primaryColor,
+      'description': 'Verify incoming materials and components',
+    },
+    'Finishing': {
+      'icon': Icons.check_circle_outlined,
+      'color': AppTheme.accentColor,
+      'description': 'Complete final finishing operations',
+    },
+    'Quality Control': {
+      'icon': Icons.verified_outlined,
+      'color': AppTheme.successColor,
+      'description': 'Perform quality checks and validation',
+    },
+    'Delivery': {
+      'icon': Icons.local_shipping_outlined,
+      'color': AppTheme.warningColor,
+      'description': 'Handle delivery and logistics',
+    },
+  };
 
   @override
   void initState() {
@@ -60,7 +79,11 @@ class _AssignUsersScreenState extends State<AssignUsersScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Failed to load users: $e'),
-          backgroundColor: Colors.red,
+          backgroundColor: AppTheme.accentColor,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
         ),
       );
     }
@@ -70,16 +93,37 @@ class _AssignUsersScreenState extends State<AssignUsersScreen> {
   Widget build(BuildContext context) {
     if (isLoading) {
       return Scaffold(
+        backgroundColor: AppTheme.backgroundColor,
         appBar: AppBar(
           backgroundColor: Colors.white,
           elevation: 0,
           leading: IconButton(
-            icon: const Icon(Icons.arrow_back, color: Colors.black),
+            icon: Icon(Icons.arrow_back, color: AppTheme.primaryColor),
             onPressed: () => Navigator.pop(context),
           ),
-          title: const Text('Assign Users', style: TextStyle(color: Colors.black)),
+          title: Text(
+            'Assign Users',
+            style: AppTheme.headingStyle.copyWith(
+              color: AppTheme.primaryColor,
+              fontSize: 20,
+            ),
+          ),
         ),
-        body: const Center(child: CircularProgressIndicator()),
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(AppTheme.primaryColor),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'Loading users...',
+                style: AppTheme.subtitleStyle,
+              ),
+            ],
+          ),
+        ),
       );
     }
 
@@ -87,218 +131,570 @@ class _AssignUsersScreenState extends State<AssignUsersScreen> {
     List<User> unassignedUsers = users.where((user) => user.assignedTask == null).toList();
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppTheme.backgroundColor,
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: () {
-            Navigator.pop(context);
-          },
+          icon: Icon(Icons.arrow_back, color: AppTheme.primaryColor),
+          onPressed: () => Navigator.pop(context),
         ),
-        title: const Text(
+        title: Text(
           'Assign Users',
-          style: TextStyle(
-            color: Colors.black,
-            fontSize: 18,
-            fontWeight: FontWeight.w600,
+          style: AppTheme.headingStyle.copyWith(
+            color: AppTheme.primaryColor,
+            fontSize: 20,
           ),
         ),
+        actions: [
+          Container(
+            margin: const EdgeInsets.only(right: 16),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  AppTheme.primaryColor.withOpacity(0.1),
+                  AppTheme.accentColor.withOpacity(0.05),
+                ],
+              ),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: AppTheme.primaryColor.withOpacity(0.2)),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.people_outline,
+                  color: AppTheme.primaryColor,
+                  size: 16,
+                ),
+                const SizedBox(width: 4),
+                Text(
+                  '${assignedUsers.length}/${users.length}',
+                  style: AppTheme.captionStyle.copyWith(
+                    color: AppTheme.primaryColor,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Assigned Users Section
-            const Text(
-              'Assigned Users',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: Colors.black,
+        child: AnimationLimiter(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: AnimationConfiguration.toStaggeredList(
+              duration: const Duration(milliseconds: 375),
+              childAnimationBuilder: (widget) => SlideAnimation(
+                horizontalOffset: 50.0,
+                child: FadeInAnimation(
+                  child: widget,
+                ),
               ),
-            ),
-            const SizedBox(height: 15),
-            assignedUsers.isEmpty
-                ? Container(
-                    padding: const EdgeInsets.all(20),
+              children: [
+                // Summary Header
+                ModernCard(
+                  child: Container(
+                    width: double.infinity,
                     decoration: BoxDecoration(
-                      color: Colors.grey[50],
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: Colors.grey[300]!),
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [
+                          AppTheme.primaryColor.withOpacity(0.1),
+                          AppTheme.accentColor.withOpacity(0.05),
+                        ],
+                      ),
                     ),
-                    child: Center(
+                    padding: const EdgeInsets.all(20),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  colors: [
+                                    AppTheme.primaryColor,
+                                    AppTheme.accentColor,
+                                  ],
+                                ),
+                                borderRadius: BorderRadius.circular(12),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: AppTheme.primaryColor.withOpacity(0.3),
+                                    blurRadius: 8,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ],
+                              ),
+                              child: const Icon(
+                                Icons.assignment_ind_outlined,
+                                color: Colors.white,
+                                size: 24,
+                              ),
+                            ),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Task Assignment',
+                                    style: AppTheme.headingStyle.copyWith(
+                                      fontSize: 20,
+                                      color: AppTheme.primaryColor,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    'Manage user task assignments efficiently',
+                                    style: AppTheme.subtitleStyle,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 30),
+
+                // Assigned Users Section
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            AppTheme.successColor,
+                            AppTheme.successColor.withOpacity(0.8),
+                          ],
+                        ),
+                        borderRadius: BorderRadius.circular(8),
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppTheme.successColor.withOpacity(0.3),
+                            blurRadius: 6,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: const Icon(
+                        Icons.check_circle_outline,
+                        color: Colors.white,
+                        size: 20,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Text(
+                      'Assigned Users',
+                      style: AppTheme.headingStyle.copyWith(
+                        fontSize: 18,
+                        color: AppTheme.primaryColor,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: AppTheme.successColor.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: AppTheme.successColor.withOpacity(0.3)),
+                      ),
                       child: Text(
-                        'No users assigned yet',
-                        style: TextStyle(
-                          color: Colors.grey[600],
-                          fontSize: 14,
+                        '${assignedUsers.length}',
+                        style: AppTheme.captionStyle.copyWith(
+                          color: AppTheme.successColor,
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
                     ),
-                  )
-                : Column(
-                    children: assignedUsers.map((user) => _buildAssignedUserCard(user)).toList(),
-                  ),
-            
-            const SizedBox(height: 30),
-            
-            // Unassigned Users Section
-            const Text(
-              'Unassigned Users',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: Colors.black,
-              ),
-            ),
-            const SizedBox(height: 15),
-            unassignedUsers.isEmpty
-                ? Container(
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      color: Colors.grey[50],
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: Colors.grey[300]!),
+                  ],
+                ),
+                const SizedBox(height: 15),
+                assignedUsers.isEmpty
+                    ? ModernCard(
+                        child: Container(
+                          padding: const EdgeInsets.all(24),
+                          child: Column(
+                            children: [
+                              Icon(
+                                Icons.assignment_late_outlined,
+                                color: AppTheme.subtitleColor,
+                                size: 48,
+                              ),
+                              const SizedBox(height: 12),
+                              Text(
+                                'No users assigned yet',
+                                style: AppTheme.headingStyle.copyWith(
+                                  fontSize: 16,
+                                  color: AppTheme.subtitleColor,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                'Start by assigning tasks to available users',
+                                style: AppTheme.subtitleStyle,
+                                textAlign: TextAlign.center,
+                              ),
+                            ],
+                          ),
+                        ),
+                      )
+                    : Column(
+                        children: assignedUsers.map((user) => _buildAssignedUserCard(user)).toList(),
+                      ),
+                
+                const SizedBox(height: 30),
+                
+                // Unassigned Users Section
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            AppTheme.warningColor,
+                            AppTheme.warningColor.withOpacity(0.8),
+                          ],
+                        ),
+                        borderRadius: BorderRadius.circular(8),
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppTheme.warningColor.withOpacity(0.3),
+                            blurRadius: 6,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: const Icon(
+                        Icons.schedule_outlined,
+                        color: Colors.white,
+                        size: 20,
+                      ),
                     ),
-                    child: Center(
+                    const SizedBox(width: 12),
+                    Text(
+                      'Unassigned Users',
+                      style: AppTheme.headingStyle.copyWith(
+                        fontSize: 18,
+                        color: AppTheme.primaryColor,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: AppTheme.warningColor.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: AppTheme.warningColor.withOpacity(0.3)),
+                      ),
                       child: Text(
-                        'All users are assigned',
-                        style: TextStyle(
-                          color: Colors.grey[600],
-                          fontSize: 14,
+                        '${unassignedUsers.length}',
+                        style: AppTheme.captionStyle.copyWith(
+                          color: AppTheme.warningColor,
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
                     ),
-                  )
-                : Column(
-                    children: unassignedUsers.map((user) => _buildUnassignedUserCard(user)).toList(),
-                  ),
-          ],
+                  ],
+                ),
+                const SizedBox(height: 15),
+                unassignedUsers.isEmpty
+                    ? ModernCard(
+                        child: Container(
+                          padding: const EdgeInsets.all(24),
+                          child: Column(
+                            children: [
+                              Icon(
+                                Icons.verified_outlined,
+                                color: AppTheme.successColor,
+                                size: 48,
+                              ),
+                              const SizedBox(height: 12),
+                              Text(
+                                'All users are assigned',
+                                style: AppTheme.headingStyle.copyWith(
+                                  fontSize: 16,
+                                  color: AppTheme.successColor,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                'Great job! Everyone has a task',
+                                style: AppTheme.subtitleStyle,
+                                textAlign: TextAlign.center,
+                              ),
+                            ],
+                          ),
+                        ),
+                      )
+                    : Column(
+                        children: unassignedUsers.map((user) => _buildUnassignedUserCard(user)).toList(),
+                      ),
+              ],
+            ),
+          ),
         ),
       ),
     );
   }
 
   Widget _buildAssignedUserCard(User user) {
-    return Container(
+    final taskData = availableTasks[user.assignedTask!];
+    
+    return ModernCard(
       margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.grey[100],
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.grey[300]!),
-      ),
-      child: Row(
-        children: [
-          CircleAvatar(
-            backgroundColor: Colors.grey[700],
-            child: const Icon(Icons.person, color: Colors.white),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  user.name,
-                  style: const TextStyle(
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        child: Row(
+          children: [
+            Container(
+              width: 50,
+              height: 50,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    AppTheme.primaryColor.withOpacity(0.8),
+                    AppTheme.primaryColor,
+                  ],
+                ),
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: AppTheme.primaryColor.withOpacity(0.3),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Center(
+                child: Text(
+                  user.name.split(' ').map((n) => n[0]).join(''),
+                  style: AppTheme.headingStyle.copyWith(
+                    color: Colors.white,
                     fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.black,
                   ),
                 ),
-                Text(
-                  '@${user.username}',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.grey[600],
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: Colors.black87,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Text(
-                    user.assignedTask!,
-                    style: const TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w500,
-                      color: Colors.white,
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    user.name,
+                    style: AppTheme.headingStyle.copyWith(
+                      fontSize: 16,
+                      color: AppTheme.primaryColor,
                     ),
                   ),
-                ),
-              ],
+                  Text(
+                    '@${user.username}',
+                    style: AppTheme.subtitleStyle,
+                  ),
+                  const SizedBox(height: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          (taskData?['color'] ?? AppTheme.primaryColor).withOpacity(0.8),
+                          taskData?['color'] ?? AppTheme.primaryColor,
+                        ],
+                      ),
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: [
+                        BoxShadow(
+                          color: (taskData?['color'] ?? AppTheme.primaryColor).withOpacity(0.3),
+                          blurRadius: 4,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          taskData?['icon'] ?? Icons.work_outline,
+                          color: Colors.white,
+                          size: 14,
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          user.assignedTask!,
+                          style: AppTheme.captionStyle.copyWith(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
-          IconButton(
-            onPressed: () => _unassignUser(user),
-            icon: Icon(Icons.remove_circle_outline, color: Colors.grey[600]),
-          ),
-        ],
+            IconButton(
+              onPressed: () => _unassignUser(user),
+              icon: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: AppTheme.accentColor.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: AppTheme.accentColor.withOpacity(0.3)),
+                ),
+                child: Icon(
+                  Icons.remove_circle_outline,
+                  color: AppTheme.accentColor,
+                  size: 20,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildUnassignedUserCard(User user) {
-    return Container(
+    return ModernCard(
       margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.grey[50],
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.grey[300]!),
-      ),
-      child: Row(
-        children: [
-          CircleAvatar(
-            backgroundColor: Colors.grey[200],
-            child: Icon(Icons.person, color: Colors.grey[600]),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  user.name,
-                  style: const TextStyle(
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        child: Row(
+          children: [
+            Container(
+              width: 50,
+              height: 50,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    AppTheme.subtitleColor.withOpacity(0.6),
+                    AppTheme.subtitleColor.withOpacity(0.8),
+                  ],
+                ),
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: AppTheme.subtitleColor.withOpacity(0.2),
+                    blurRadius: 6,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Center(
+                child: Text(
+                  user.name.split(' ').map((n) => n[0]).join(''),
+                  style: AppTheme.headingStyle.copyWith(
+                    color: Colors.white,
                     fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.black,
                   ),
                 ),
-                Text(
-                  '@${user.username}',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.grey[600],
-                  ),
-                ),
-              ],
-            ),
-          ),
-          ElevatedButton(
-            onPressed: () => _showAssignTaskDialog(user),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.grey[800],
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(6),
               ),
             ),
-            child: const Text(
-              'Assign',
-              style: TextStyle(fontSize: 12),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    user.name,
+                    style: AppTheme.headingStyle.copyWith(
+                      fontSize: 16,
+                      color: AppTheme.primaryColor,
+                    ),
+                  ),
+                  Text(
+                    '@${user.username}',
+                    style: AppTheme.subtitleStyle,
+                  ),
+                  const SizedBox(height: 4),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: AppTheme.warningColor.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: AppTheme.warningColor.withOpacity(0.3)),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.schedule,
+                          color: AppTheme.warningColor,
+                          size: 12,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          'Unassigned',
+                          style: AppTheme.captionStyle.copyWith(
+                            color: AppTheme.warningColor,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
+            Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [AppTheme.primaryColor, AppTheme.accentColor],
+                ),
+                borderRadius: BorderRadius.circular(8),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppTheme.primaryColor.withOpacity(0.3),
+                    blurRadius: 6,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: ElevatedButton(
+                onPressed: () => _showAssignTaskDialog(user),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.transparent,
+                  shadowColor: Colors.transparent,
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(
+                      Icons.add_task,
+                      color: Colors.white,
+                      size: 16,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      'Assign',
+                      style: AppTheme.captionStyle.copyWith(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -308,186 +704,244 @@ class _AssignUsersScreenState extends State<AssignUsersScreen> {
       context: context,
       builder: (BuildContext context) {
         return Dialog(
-          backgroundColor: Colors.white,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Container(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // Header
-                Row(
-                  children: [
-                    Icon(
-                      Icons.person_add,
-                      color: Colors.grey[700],
-                      size: 24,
-                    ),
-                    const SizedBox(width: 8),
-                    const Text(
-                      'Assign Task',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                
-                // User info
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Colors.grey[100],
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Row(
+          backgroundColor: Colors.transparent,
+          insetPadding: const EdgeInsets.all(20),
+          child: ModernCard(
+            child: Container(
+              padding: const EdgeInsets.all(24),
+              constraints: const BoxConstraints(maxWidth: 400),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Header
+                  Row(
                     children: [
-                      CircleAvatar(
-                        backgroundColor: Colors.grey[300],
-                        radius: 20,
-                        child: Icon(Icons.person, color: Colors.grey[700]),
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [
+                              AppTheme.primaryColor,
+                              AppTheme.accentColor,
+                            ],
+                          ),
+                          borderRadius: BorderRadius.circular(12),
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppTheme.primaryColor.withOpacity(0.3),
+                              blurRadius: 8,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: const Icon(
+                          Icons.assignment_ind_outlined,
+                          color: Colors.white,
+                          size: 24,
+                        ),
                       ),
-                      const SizedBox(width: 12),
+                      const SizedBox(width: 16),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              user.name,
-                              style: const TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w600,
-                                color: Colors.black,
+                              'Assign Task',
+                              style: AppTheme.headingStyle.copyWith(
+                                fontSize: 18,
+                                color: AppTheme.primaryColor,
                               ),
                             ),
                             Text(
-                              '@${user.username}',
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: Colors.grey[600],
-                              ),
+                              'Select a task for ${user.name}',
+                              style: AppTheme.subtitleStyle,
                             ),
                           ],
                         ),
                       ),
                     ],
                   ),
-                ),
-                
-                const SizedBox(height: 20),
-                
-                Text(
-                  'Select a task to assign:',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey[700],
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                
-                // Task options
-                ...availableTasks.map((task) => Container(
-                  margin: const EdgeInsets.only(bottom: 8),
-                  child: InkWell(
-                    onTap: () {
-                      _assignTask(user, task);
-                      Navigator.of(context).pop();
-                    },
-                    borderRadius: BorderRadius.circular(8),
+                  const SizedBox(height: 20),
+                  
+                  // User info
+                  ModernCard(
                     child: Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        border: Border.all(color: Colors.grey[300]!),
-                        borderRadius: BorderRadius.circular(8),
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [
+                            AppTheme.primaryColor.withOpacity(0.05),
+                            AppTheme.accentColor.withOpacity(0.02),
+                          ],
+                        ),
                       ),
                       child: Row(
                         children: [
                           Container(
-                            padding: const EdgeInsets.all(8),
+                            width: 40,
+                            height: 40,
                             decoration: BoxDecoration(
-                              color: Colors.grey[100],
-                              borderRadius: BorderRadius.circular(6),
+                              gradient: LinearGradient(
+                                colors: [
+                                  AppTheme.primaryColor.withOpacity(0.8),
+                                  AppTheme.primaryColor,
+                                ],
+                              ),
+                              shape: BoxShape.circle,
                             ),
-                            child: Icon(
-                              _getTaskIcon(task),
-                              color: Colors.grey[700],
-                              size: 20,
+                            child: Center(
+                              child: Text(
+                                user.name.split(' ').map((n) => n[0]).join(''),
+                                style: AppTheme.headingStyle.copyWith(
+                                  color: Colors.white,
+                                  fontSize: 14,
+                                ),
+                              ),
                             ),
                           ),
                           const SizedBox(width: 12),
-                          Text(
-                            task,
-                            style: const TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w500,
-                              color: Colors.black,
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  user.name,
+                                  style: AppTheme.headingStyle.copyWith(
+                                    fontSize: 14,
+                                    color: AppTheme.primaryColor,
+                                  ),
+                                ),
+                                Text(
+                                  '@${user.username}',
+                                  style: AppTheme.subtitleStyle,
+                                ),
+                              ],
                             ),
-                          ),
-                          const Spacer(),
-                          Icon(
-                            Icons.arrow_forward_ios,
-                            color: Colors.grey[400],
-                            size: 16,
                           ),
                         ],
                       ),
                     ),
                   ),
-                )).toList(),
-                
-                const SizedBox(height: 20),
-                
-                // Cancel button
-                SizedBox(
-                  width: double.infinity,
-                  child: TextButton(
-                    onPressed: () {
-                      Navigator.of(context).pop();
-                    },
-                    style: TextButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        side: BorderSide(color: Colors.grey[300]!),
-                      ),
+                  
+                  const SizedBox(height: 20),
+                  
+                  Text(
+                    'Available Tasks',
+                    style: AppTheme.headingStyle.copyWith(
+                      fontSize: 14,
+                      color: AppTheme.primaryColor,
                     ),
-                    child: Text(
-                      'Cancel',
-                      style: TextStyle(
-                        color: Colors.grey[600],
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
+                  ),
+                  const SizedBox(height: 12),
+                  
+                  // Task options
+                  ...availableTasks.entries.map((entry) {
+                    final taskName = entry.key;
+                    final taskData = entry.value;
+                    
+                    return Container(
+                      margin: const EdgeInsets.only(bottom: 8),
+                      child: InkWell(
+                        onTap: () {
+                          _assignTask(user, taskName);
+                          Navigator.of(context).pop();
+                        },
+                        borderRadius: BorderRadius.circular(12),
+                        child: ModernCard(
+                          child: Container(
+                            padding: const EdgeInsets.all(16),
+                            child: Row(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(10),
+                                  decoration: BoxDecoration(
+                                    gradient: LinearGradient(
+                                      colors: [
+                                        taskData['color'].withOpacity(0.8),
+                                        taskData['color'],
+                                      ],
+                                    ),
+                                    borderRadius: BorderRadius.circular(10),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: taskData['color'].withOpacity(0.3),
+                                        blurRadius: 6,
+                                        offset: const Offset(0, 2),
+                                      ),
+                                    ],
+                                  ),
+                                  child: Icon(
+                                    taskData['icon'],
+                                    color: Colors.white,
+                                    size: 20,
+                                  ),
+                                ),
+                                const SizedBox(width: 16),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        taskName,
+                                        style: AppTheme.headingStyle.copyWith(
+                                          fontSize: 14,
+                                          color: AppTheme.primaryColor,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        taskData['description'],
+                                        style: AppTheme.captionStyle,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Icon(
+                                  Icons.arrow_forward_ios,
+                                  color: AppTheme.subtitleColor,
+                                  size: 16,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    );
+                  }),
+                  
+                  const SizedBox(height: 20),
+                  
+                  // Cancel button
+                  SizedBox(
+                    width: double.infinity,
+                    child: TextButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      style: TextButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          side: BorderSide(color: AppTheme.subtitleColor.withOpacity(0.3)),
+                        ),
+                      ),
+                      child: Text(
+                        'Cancel',
+                        style: AppTheme.bodyStyle.copyWith(
+                          color: AppTheme.subtitleColor,
+                          fontWeight: FontWeight.w500,
+                        ),
                       ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         );
       },
     );
-  }
-
-  IconData _getTaskIcon(String task) {
-    switch (task) {
-      case 'Incoming Inspection':
-        return Icons.input;
-      case 'Finishing':
-        return Icons.check_circle;
-      case 'Quality Control':
-        return Icons.verified;
-      case 'Delivery':
-        return Icons.local_shipping;
-      default:
-        return Icons.work;
-    }
   }
 
   void _assignTask(User user, String task) async {
@@ -499,16 +953,36 @@ class _AssignUsersScreenState extends State<AssignUsersScreen> {
         });
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('${user.name} assigned to $task'),
-            backgroundColor: Colors.grey[800],
+            content: Row(
+              children: [
+                Icon(
+                  Icons.check_circle,
+                  color: Colors.white,
+                  size: 20,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text('${user.name} assigned to $task'),
+                ),
+              ],
+            ),
+            backgroundColor: AppTheme.successColor,
             duration: const Duration(seconds: 2),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
           ),
         );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Failed to assign task: ${result['message']}'),
-            backgroundColor: Colors.red,
+            backgroundColor: AppTheme.accentColor,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
           ),
         );
       }
@@ -516,7 +990,11 @@ class _AssignUsersScreenState extends State<AssignUsersScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Error assigning task: $e'),
-          backgroundColor: Colors.red,
+          backgroundColor: AppTheme.accentColor,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
         ),
       );
     }
@@ -531,16 +1009,36 @@ class _AssignUsersScreenState extends State<AssignUsersScreen> {
         });
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('${user.name} unassigned'),
-            backgroundColor: Colors.grey[700],
+            content: Row(
+              children: [
+                Icon(
+                  Icons.info,
+                  color: Colors.white,
+                  size: 20,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text('${user.name} unassigned'),
+                ),
+              ],
+            ),
+            backgroundColor: AppTheme.primaryColor,
             duration: const Duration(seconds: 2),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
           ),
         );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Failed to unassign user: ${result['message']}'),
-            backgroundColor: Colors.red,
+            backgroundColor: AppTheme.accentColor,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
           ),
         );
       }
@@ -548,7 +1046,11 @@ class _AssignUsersScreenState extends State<AssignUsersScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Error unassigning user: $e'),
-          backgroundColor: Colors.red,
+          backgroundColor: AppTheme.accentColor,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
         ),
       );
     }

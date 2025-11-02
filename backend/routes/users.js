@@ -1,7 +1,9 @@
 const express = require('express');
 const { body, validationResult } = require('express-validator');
-const supabase = require('../config/supabase');
+const User = require('../models/User');
 const { auth, adminAuth, supervisorAuth } = require('../middleware/auth');
+const { notifyUserOfTaskAssignment } = require('../services/notificationService');
+const mongoose = require('mongoose');
 
 const router = express.Router();
 
@@ -9,14 +11,9 @@ const router = express.Router();
 router.get('/assign', auth, async (req, res) => {
   try {
     console.log('Fetching users for assignment...');
-    const { data: users, error } = await supabase
-      .from('users')
-      .select('id, name, username, assigned_task')
-      .in('role', ['User', 'Supervisor']);
-    
-    if (error) {
-      throw error;
-    }
+    const users = await User.find(
+      { role: { $in: ['User', 'Supervisor'] } }
+    ).select('name username assignedTask').lean();
     
     console.log('Found users:', users.length);
     res.json(users);
@@ -29,14 +26,7 @@ router.get('/assign', auth, async (req, res) => {
 // Get all users (Admin and Supervisor)
 router.get('/', auth, supervisorAuth, async (req, res) => {
   try {
-    const { data: users, error } = await supabase
-      .from('users')
-      .select('id, name, username, role, is_active, assigned_task, completed_today, total_assigned, created_at, updated_at');
-    
-    if (error) {
-      throw error;
-    }
-    
+    const users = await User.find({}).select('-password').lean();
     res.json(users);
   } catch (error) {
     console.error(error);
@@ -95,15 +85,27 @@ router.put('/:id/assign-task', auth, supervisorAuth, [
       return res.status(400).json({ errors: errors.array() });
     }
 
-    const { data: user, error } = await supabase
-      .from('users')
-      .update({ assigned_task: req.body.assignedTask })
-      .eq('id', req.params.id)
-      .select('id, name, username, role, is_active, assigned_task, completed_today, total_assigned')
-      .single();
+    const user = await User.findByIdAndUpdate(
+      req.params.id,
+      { assignedTask: req.body.assignedTask },
+      { new: true }
+    ).select('-password');
 
-    if (error || !user) {
+    if (!user) {
       return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Send notification to the assigned user
+    try {
+      const supervisor = await User.findById(req.user.userId);
+      await notifyUserOfTaskAssignment(
+        user._id,
+        req.body.assignedTask,
+        supervisor ? supervisor.name : 'Supervisor'
+      );
+    } catch (notificationError) {
+      console.error('Failed to send task assignment notification:', notificationError);
+      // Don't fail the assignment if notification fails
     }
 
     res.json(user);
@@ -116,14 +118,13 @@ router.put('/:id/assign-task', auth, supervisorAuth, [
 // Unassign task from user (Supervisor or Admin)
 router.put('/:id/unassign-task', auth, supervisorAuth, async (req, res) => {
   try {
-    const { data: user, error } = await supabase
-      .from('users')
-      .update({ assigned_task: null })
-      .eq('id', req.params.id)
-      .select('id, name, username, role, is_active, assigned_task, completed_today, total_assigned')
-      .single();
+    const user = await User.findByIdAndUpdate(
+      req.params.id,
+      { assignedTask: null },
+      { new: true }
+    ).select('-password');
 
-    if (error || !user) {
+    if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
 

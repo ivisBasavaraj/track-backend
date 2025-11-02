@@ -24,12 +24,12 @@ class _IncomingInspectionScreenState extends State<IncomingInspectionScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFFF5F7FA),
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: const Color(0xFF3A3985),
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () {
             Navigator.pop(context);
           },
@@ -37,23 +37,23 @@ class _IncomingInspectionScreenState extends State<IncomingInspectionScreen> {
         title: const Text(
           'Incoming Inspection',
           style: TextStyle(
-            color: Colors.black,
+            color: Colors.white,
             fontSize: 20,
             fontWeight: FontWeight.bold,
           ),
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.save, color: Colors.black),
+            icon: const Icon(Icons.save, color: Colors.white),
             onPressed: _saveAllInspections,
           ),
           IconButton(
-            icon: const Icon(Icons.logout, color: Colors.black),
+            icon: const Icon(Icons.logout, color: Colors.white),
             onPressed: () async {
               await ApiService.removeToken();
               Navigator.pushReplacement(
                 context,
-                MaterialPageRoute(builder: (context) => LoginScreen()),
+                MaterialPageRoute(builder: (context) => const LoginScreen()),
               );
             },
           ),
@@ -87,7 +87,7 @@ class _IncomingInspectionScreenState extends State<IncomingInspectionScreen> {
               child: ElevatedButton.icon(
                 onPressed: _addNewUnit,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.black,
+                  backgroundColor: const Color(0xFF3499FF),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),
                   ),
@@ -296,16 +296,16 @@ class _InspectionUnitWidgetState extends State<InspectionUnitWidget> {
       barrierDismissible: false,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text('Pause Reason Required'),
+          title: const Text('Pause Reason Required'),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Please provide a reason for pausing the timer:'),
-              SizedBox(height: 10),
+              const Text('Please provide a reason for pausing the timer:'),
+              const SizedBox(height: 10),
               TextField(
                 controller: remarkController,
-                decoration: InputDecoration(
+                decoration: const InputDecoration(
                   hintText: 'Enter reason for pause...',
                   border: OutlineInputBorder(),
                 ),
@@ -319,7 +319,7 @@ class _InspectionUnitWidgetState extends State<InspectionUnitWidget> {
               onPressed: () {
                 if (remarkController.text.trim().isEmpty) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
+                    const SnackBar(
                       content: Text('Please enter a reason for pausing'),
                       backgroundColor: Colors.red,
                     ),
@@ -333,7 +333,7 @@ class _InspectionUnitWidgetState extends State<InspectionUnitWidget> {
                 
                 Navigator.of(context).pop();
               },
-              child: Text('Save Reason'),
+              child: const Text('Save Reason'),
             ),
           ],
         );
@@ -357,76 +357,199 @@ class _InspectionUnitWidgetState extends State<InspectionUnitWidget> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(20),
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 450),
+      curve: Curves.easeInOutCubic,
+      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: Colors.grey[50],
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey[300]!, width: 1),
+        gradient: const LinearGradient(
+          colors: [Color(0xFF3A3985), Color(0xFF3499FF)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: const [
+          BoxShadow(
+            color: Color.fromARGB(48, 58, 57, 133),
+            offset: Offset(0, 18),
+            blurRadius: 48,
+            spreadRadius: -12,
+          ),
+        ],
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Stack(
+        clipBehavior: Clip.none,
         children: [
-          // Header with unit number and remove button
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Unit ${widget.unitNumber}',
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black,
+          Positioned(
+            right: -46,
+            top: -46,
+            child: _FrostedOrb(
+              diameter: 160,
+              colors: const [Color(0x66FFFFFF), Color(0x05FFFFFF)],
+            ),
+          ),
+          Positioned(
+            left: -58,
+            bottom: -58,
+            child: _FrostedOrb(
+              diameter: 200,
+              colors: const [Color(0x33FFFFFF), Colors.transparent],
+            ),
+          ),
+          Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(18),
+              color: Colors.white.withOpacity(0.97),
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(18),
+              child: BackdropFilter(
+                filter: ui.ImageFilter.blur(sigmaX: 22, sigmaY: 22),
+                child: Container(
+                  padding: const EdgeInsets.all(24),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(18),
+                    border: Border.all(
+                      color: Colors.white.withOpacity(0.35),
+                      width: 1.4,
+                    ),
+                    gradient: LinearGradient(
+                      colors: [
+                        Colors.white.withOpacity(0.72),
+                        Colors.white.withOpacity(0.42),
+                      ],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                  ),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 420),
+                    curve: Curves.easeInOut,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(16),
+                      gradient: const LinearGradient(
+                        colors: [Color(0x113499FF), Color(0x113A3985)],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(4),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Row(
+                                children: [
+                                  AnimatedScale(
+                                    duration: const Duration(milliseconds: 300),
+                                    scale: widget.unit.isCompleted ? 1.05 : 1,
+                                    curve: Curves.easeOutBack,
+                                    child: Container(
+                                      width: 40,
+                                      height: 40,
+                                      decoration: const BoxDecoration(
+                                        shape: BoxShape.circle,
+                                        gradient: LinearGradient(
+                                          colors: [Color(0xFF3499FF), Color(0xFF3A3985)],
+                                          begin: Alignment.topLeft,
+                                          end: Alignment.bottomRight,
+                                        ),
+                                      ),
+                                      child: const Icon(
+                                        Icons.inventory_rounded,
+                                        color: Colors.white,
+                                        size: 22,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 14),
+                                  Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'Unit ${widget.unitNumber}',
+                                        style: const TextStyle(
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.bold,
+                                          color: Color(0xFF111827),
+                                        ),
+                                      ),
+                                      Text(
+                                        widget.unit.isCompleted
+                                            ? 'Inspection completed'
+                                            : widget.unit.isTimerRunning
+                                                ? 'Inspection in progress'
+                                                : 'Ready to begin inspection',
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color: const Color(0xFF111827).withOpacity(0.45),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                              if (widget.onRemove != null)
+                                InkWell(
+                                  borderRadius: BorderRadius.circular(14),
+                                  onTap: widget.onRemove,
+                                  child: Ink(
+                                    padding: const EdgeInsets.all(10),
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(14),
+                                      color: const Color(0xFFFFF1F1),
+                                    ),
+                                    child: const Icon(
+                                      Icons.close_rounded,
+                                      color: Color(0xFFD32F2F),
+                                      size: 20,
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          ),
+                          const SizedBox(height: 22),
+                          _buildTimerSection(),
+                          const SizedBox(height: 26),
+                          _buildCameraSection(),
+                          const SizedBox(height: 26),
+                          _buildTextField(
+                            'Component Name *',
+                            _componentNameController,
+                            (value) => widget.unit.componentName = value,
+                          ),
+                          const SizedBox(height: 20),
+                          _buildTextField(
+                            'Supplier Details',
+                            _supplierController,
+                            (value) => widget.unit.supplierDetails = value,
+                          ),
+                          const SizedBox(height: 20),
+                          _buildDateTimeSection(),
+                          const SizedBox(height: 20),
+                          _buildTextField(
+                            'Remarks/Comments',
+                            _remarksController,
+                            (value) => widget.unit.remarks = value,
+                            maxLines: 3,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
                 ),
               ),
-              if (widget.onRemove != null)
-                IconButton(
-                  icon: const Icon(Icons.close, color: Colors.red),
-                  onPressed: widget.onRemove,
-                ),
-            ],
-          ),
-          const SizedBox(height: 15),
-
-          // Timer Section for this unit
-          _buildTimerSection(),
-          const SizedBox(height: 20),
-
-          // Camera Section
-          _buildCameraSection(),
-          const SizedBox(height: 20),
-
-          // Component Name Field
-          _buildTextField(
-            'Component Name *',
-            _componentNameController,
-            (value) => widget.unit.componentName = value,
-          ),
-          const SizedBox(height: 15),
-
-          // Supplier Details Field
-          _buildTextField(
-            'Supplier Details',
-            _supplierController,
-            (value) => widget.unit.supplierDetails = value,
-          ),
-          const SizedBox(height: 15),
-
-          // Date & Time Display
-          _buildDateTimeSection(),
-          const SizedBox(height: 15),
-
-          // Remarks Field
-          _buildTextField(
-            'Remarks/Comments',
-            _remarksController,
-            (value) => widget.unit.remarks = value,
-            maxLines: 3,
+            ),
           ),
         ],
       ),
     );
   }
+
+
 
   Widget _buildTimerSection() {
     return Container(
@@ -665,35 +788,98 @@ class _InspectionUnitWidgetState extends State<InspectionUnitWidget> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 12,
-            color: Colors.grey[600],
-            fontWeight: FontWeight.w500,
-          ),
+        Row(
+          children: [
+            Container(
+              width: 6,
+              height: 6,
+              margin: const EdgeInsets.only(right: 8),
+              decoration: const BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: LinearGradient(
+                  colors: [Color(0xFF3A3985), Color(0xFF3499FF)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+              ),
+            ),
+            Text(
+              label,
+              style: const TextStyle(
+                fontSize: 12,
+                color: Color(0xFF111827),
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
         ),
-        const SizedBox(height: 5),
-        TextField(
-          controller: controller,
-          maxLines: maxLines,
-          onChanged: onChanged,
-          decoration: InputDecoration(
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: BorderSide(color: Colors.grey[300]!),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: BorderSide(color: Colors.grey[300]!),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: Colors.black, width: 2),
-            ),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-            fillColor: Colors.white,
-            filled: true,
+        const SizedBox(height: 8),
+        TweenAnimationBuilder<double>(
+          tween: Tween<double>(begin: 0, end: 1),
+          duration: const Duration(milliseconds: 600),
+          curve: Curves.easeInOut,
+          builder: (context, value, child) {
+            return Transform.translate(
+              offset: Offset(0, 12 * (1 - value)),
+              child: Opacity(opacity: value, child: child),
+            );
+          },
+          child: Focus(
+            child: Builder(builder: (context) {
+              final isFocused = Focus.of(context).hasFocus;
+              return AnimatedContainer(
+                duration: const Duration(milliseconds: 300),
+                curve: Curves.easeOutCubic,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(14),
+                  gradient: isFocused
+                      ? const LinearGradient(
+                          colors: [Color(0x1A3A3985), Color(0x1A3499FF)],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        )
+                      : const LinearGradient(
+                          colors: [Colors.white, Colors.white],
+                        ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(isFocused ? 0.04 : 0.02),
+                      offset: const Offset(0, 10),
+                      blurRadius: 24,
+                      spreadRadius: 0,
+                    ),
+                  ],
+                ),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 300),
+                  padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: isFocused
+                          ? const Color(0xFF3499FF).withOpacity(0.7)
+                          : Colors.black.withOpacity(0.08),
+                      width: isFocused ? 1.4 : 1,
+                    ),
+                    color: Colors.white,
+                  ),
+                  child: TextField(
+                    controller: controller,
+                    maxLines: maxLines,
+                    onChanged: onChanged,
+                    cursorColor: const Color(0xFF3499FF),
+                    decoration: const InputDecoration(
+                      border: InputBorder.none,
+                      isDense: true,
+                    ),
+                    style: const TextStyle(
+                      fontSize: 14,
+                      color: Color(0xFF1F2937),
+                    ),
+                  ),
+                ),
+              );
+            }),
           ),
         ),
       ],
@@ -907,7 +1093,15 @@ class _CameraScreenState extends State<CameraScreen> {
           .findRenderObject() as RenderRepaintBoundary;
       ui.Image image = await boundary.toImage(pixelRatio: 2.0);
       ByteData? byteData = await image.toByteData(format: ui.ImageByteFormat.png);
-      Uint8List pngBytes = byteData!.buffer.asUint8List();
+      
+      if (byteData == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Failed to process image')),
+        );
+        return;
+      }
+      
+      Uint8List pngBytes = byteData.buffer.asUint8List();
 
       // Save the image with watermark
       final directory = await getTemporaryDirectory();
@@ -931,5 +1125,31 @@ class _CameraScreenState extends State<CameraScreen> {
   void dispose() {
     _controller?.dispose();
     super.dispose();
+  }
+}
+
+class _FrostedOrb extends StatelessWidget {
+  final double diameter;
+  final List<Color> colors;
+
+  const _FrostedOrb({
+    required this.diameter,
+    required this.colors,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: diameter,
+      height: diameter,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: colors,
+        ),
+      ),
+    );
   }
 }

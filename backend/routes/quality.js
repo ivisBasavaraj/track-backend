@@ -25,7 +25,11 @@ router.post('/', auth, upload.single('signatureImage'), [
     }
 
     const qcData = {
-      ...req.body,
+      partId: req.body.partId,
+      holeDimensions: req.body.holeDimensions,
+      levelReadings: req.body.levelReadings,
+      inspectorName: req.body.inspectorName,
+      remarks: req.body.remarks,
       inspectedBy: req.user._id
     };
 
@@ -35,7 +39,6 @@ router.post('/', auth, upload.single('signatureImage'), [
 
     const qualityControl = new QualityControl(qcData);
     await qualityControl.save();
-
     await qualityControl.populate('inspectedBy', 'name username');
 
     res.status(201).json(qualityControl);
@@ -52,13 +55,15 @@ router.get('/', auth, async (req, res) => {
     const limit = parseInt(req.query.limit) || 10;
     const skip = (page - 1) * limit;
 
-    const qcRecords = await QualityControl.find()
-      .populate('inspectedBy', 'name username')
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(limit);
-
-    const total = await QualityControl.countDocuments();
+    const [qcRecords, total] = await Promise.all([
+      QualityControl.find()
+        .populate('inspectedBy', 'name username')
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .lean(),
+      QualityControl.countDocuments()
+    ]);
 
     res.json({
       qcRecords,
@@ -163,35 +168,28 @@ router.get('/user/:userId', auth, async (req, res) => {
 // Get quality statistics
 router.get('/stats/quality', auth, async (req, res) => {
   try {
-    const stats = await QualityControl.aggregate([
+    const statusStats = await QualityControl.aggregate([
       {
         $group: {
-          _id: null,
-          totalRecords: { $sum: 1 },
-          passCount: {
-            $sum: { $cond: [{ $eq: ['$qcStatus', 'Pass'] }, 1, 0] }
-          },
-          failCount: {
-            $sum: { $cond: [{ $eq: ['$qcStatus', 'Fail'] }, 1, 0] }
-          },
-          toleranceExceededCount: {
-            $sum: { $cond: ['$toleranceExceeded', 1, 0] }
-          }
+          _id: '$qcStatus',
+          count: { $sum: 1 }
         }
       }
     ]);
 
-    const result = stats[0] || {
-      totalRecords: 0,
-      passCount: 0,
-      failCount: 0,
-      toleranceExceededCount: 0
+    const totalRecords = statusStats.reduce((sum, item) => sum + item.count, 0);
+    const passCount = statusStats.find(s => s._id === 'Pass')?.count || 0;
+    const failCount = statusStats.find(s => s._id === 'Fail')?.count || 0;
+
+    const stats = {
+      totalRecords,
+      passCount,
+      failCount,
+      toleranceExceededCount: 0,
+      passRate: totalRecords > 0 ? ((passCount / totalRecords) * 100).toFixed(2) : 0
     };
 
-    result.passRate = result.totalRecords > 0 ? 
-      ((result.passCount / result.totalRecords) * 100).toFixed(2) : 0;
-
-    res.json(result);
+    res.json(stats);
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Server error' });

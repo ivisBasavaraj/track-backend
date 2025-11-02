@@ -94,7 +94,7 @@ class SimpleAdminDashboard extends StatelessWidget {
                 onPressed: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => ManageUsersScreen()),
+                    MaterialPageRoute(builder: (context) => const ManageUsersScreen()),
                   );
                 },
                 style: ElevatedButton.styleFrom(

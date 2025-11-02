@@ -1,8 +1,9 @@
 const express = require('express');
 const { body, validationResult } = require('express-validator');
-const supabase = require('../config/supabase');
+const Inspection = require('../models/Inspection');
 const { auth } = require('../middleware/auth');
 const upload = require('../middleware/upload');
+const { notifySupervisorOfInspectionStart } = require('../services/notificationService');
 
 const router = express.Router();
 
@@ -23,45 +24,48 @@ router.post('/', auth, upload.single('image'), [
     }
 
     const inspectionData = {
-      unit_number: parseInt(req.body.unitNumber),
-      component_name: req.body.componentName,
-      supplier_details: req.body.supplierDetails,
+      unitNumber: parseInt(req.body.unitNumber),
+      componentName: req.body.componentName,
+      supplierDetails: req.body.supplierDetails,
       remarks: req.body.remarks,
       duration: req.body.duration,
-      is_completed: req.body.isCompleted === 'true',
-      inspected_by: req.user.id
+      isCompleted: req.body.isCompleted === 'true',
+      inspectedBy: req.user._id
     };
 
     // Handle timerEvents if provided
     if (req.body.timerEvents) {
       try {
-        inspectionData.timer_events = typeof req.body.timerEvents === 'string' 
+        inspectionData.timerEvents = typeof req.body.timerEvents === 'string' 
           ? JSON.parse(req.body.timerEvents) 
           : req.body.timerEvents;
       } catch (e) {
-        inspectionData.timer_events = [];
+        inspectionData.timerEvents = [];
       }
     }
 
     if (req.file) {
-      inspectionData.image_path = req.file.path;
+      inspectionData.imagePath = req.file.path;
     }
 
     if (req.body.isCompleted === 'true') {
-      inspectionData.end_time = new Date().toISOString();
+      inspectionData.endTime = new Date();
     }
 
-    const { data: inspection, error } = await supabase
-      .from('inspections')
-      .insert(inspectionData)
-      .select(`
-        *,
-        inspected_by_user:users!inspected_by(name, username)
-      `)
-      .single();
+    const inspection = new Inspection(inspectionData);
+    await inspection.save();
+    await inspection.populate('inspectedBy', 'name username');
 
-    if (error) {
-      throw error;
+    // Send notification to supervisors about inspection start
+    try {
+      await notifySupervisorOfInspectionStart(
+        inspection.componentName,
+        inspection.inspectedBy.name,
+        inspection.createdAt
+      );
+    } catch (notificationError) {
+      console.error('Failed to send inspection start notification:', notificationError);
+      // Don't fail the creation if notification fails
     }
 
     res.status(201).json(inspection);

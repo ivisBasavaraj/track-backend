@@ -27,7 +27,17 @@ router.post('/', auth, upload.single('deliveryProofImage'), [
     }
 
     const deliveryData = {
-      ...req.body,
+      customerName: req.body.customerName,
+      customerId: req.body.customerId,
+      deliveryAddress: req.body.deliveryAddress,
+      partId: req.body.partId,
+      vehicleDetails: req.body.vehicleDetails,
+      driverName: req.body.driverName,
+      driverContact: req.body.driverContact,
+      scheduledDate: req.body.scheduledDate,
+      scheduledTime: req.body.scheduledTime,
+      deliveryStatus: req.body.deliveryStatus,
+      remarks: req.body.remarks,
       managedBy: req.user._id
     };
 
@@ -35,13 +45,8 @@ router.post('/', auth, upload.single('deliveryProofImage'), [
       deliveryData.deliveryProofImage = req.file.path;
     }
 
-    if (req.body.deliveryStatus === 'Delivered') {
-      deliveryData.actualDeliveryDate = new Date();
-    }
-
     const delivery = new Delivery(deliveryData);
     await delivery.save();
-
     await delivery.populate('managedBy', 'name username');
 
     res.status(201).json(delivery);
@@ -58,13 +63,15 @@ router.get('/', auth, async (req, res) => {
     const limit = parseInt(req.query.limit) || 10;
     const skip = (page - 1) * limit;
 
-    const deliveries = await Delivery.find()
-      .populate('managedBy', 'name username')
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(limit);
-
-    const total = await Delivery.countDocuments();
+    const [deliveries, total] = await Promise.all([
+      Delivery.find()
+        .populate('managedBy', 'name username')
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .lean(),
+      Delivery.countDocuments()
+    ]);
 
     res.json({
       deliveries,
@@ -121,10 +128,6 @@ router.put('/:id', auth, upload.single('deliveryProofImage'), [
       updateData.deliveryProofImage = req.file.path;
     }
 
-    if (req.body.deliveryStatus === 'Delivered' && !updateData.actualDeliveryDate) {
-      updateData.actualDeliveryDate = new Date();
-    }
-
     const delivery = await Delivery.findByIdAndUpdate(
       req.params.id,
       updateData,
@@ -175,7 +178,8 @@ router.get('/user/:userId', auth, async (req, res) => {
 // Get delivery statistics
 router.get('/stats/delivery', auth, async (req, res) => {
   try {
-    const stats = await Delivery.aggregate([
+    // Use aggregation for better performance
+    const statusBreakdown = await Delivery.aggregate([
       {
         $group: {
           _id: '$deliveryStatus',
@@ -184,13 +188,13 @@ router.get('/stats/delivery', auth, async (req, res) => {
       }
     ]);
 
-    const totalDeliveries = await Delivery.countDocuments();
-    const deliveredCount = await Delivery.countDocuments({ deliveryStatus: 'Delivered' });
-    const pendingCount = await Delivery.countDocuments({ deliveryStatus: 'Pending' });
-    const inTransitCount = await Delivery.countDocuments({ deliveryStatus: 'In Transit' });
-    const failedCount = await Delivery.countDocuments({ deliveryStatus: 'Failed' });
+    const totalDeliveries = statusBreakdown.reduce((sum, item) => sum + item.count, 0);
+    const deliveredCount = statusBreakdown.find(s => s._id === 'Delivered')?.count || 0;
+    const pendingCount = statusBreakdown.find(s => s._id === 'Pending')?.count || 0;
+    const inTransitCount = statusBreakdown.find(s => s._id === 'In Transit')?.count || 0;
+    const failedCount = statusBreakdown.find(s => s._id === 'Failed')?.count || 0;
 
-    const deliveryRate = totalDeliveries > 0 ? 
+    const deliveryRate = totalDeliveries > 0 ?
       ((deliveredCount / totalDeliveries) * 100).toFixed(2) : 0;
 
     res.json({
@@ -200,7 +204,7 @@ router.get('/stats/delivery', auth, async (req, res) => {
       inTransitCount,
       failedCount,
       deliveryRate,
-      statusBreakdown: stats
+      statusBreakdown
     });
   } catch (error) {
     console.error(error);
@@ -212,10 +216,13 @@ router.get('/stats/delivery', auth, async (req, res) => {
 router.get('/stats/upcoming', auth, async (req, res) => {
   try {
     const today = new Date();
-    const nextWeek = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000);
+    const nextWeek = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
 
     const upcomingDeliveries = await Delivery.find({
-      scheduledDate: { $gte: today, $lte: nextWeek },
+      scheduledDate: {
+        $gte: today,
+        $lte: nextWeek
+      },
       deliveryStatus: { $in: ['Pending', 'Dispatched', 'In Transit'] }
     })
       .populate('managedBy', 'name username')

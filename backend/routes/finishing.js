@@ -2,6 +2,10 @@ const express = require('express');
 const { body, validationResult } = require('express-validator');
 const Finishing = require('../models/Finishing');
 const { auth } = require('../middleware/auth');
+const {
+  notifySupervisorOfFinishingStatus,
+  notifyAdminOfPauseWithRemark
+} = require('../services/notificationService');
 
 const router = express.Router();
 
@@ -22,18 +26,32 @@ router.post('/', auth, [
     }
 
     const finishingData = {
-      ...req.body,
+      toolUsed: req.body.toolUsed,
+      toolStatus: req.body.toolStatus,
+      partComponentId: req.body.partComponentId,
+      operatorName: req.body.operatorName,
+      remarks: req.body.remarks,
+      duration: req.body.duration,
+      isCompleted: req.body.isCompleted === 'true' || req.body.isCompleted === true,
       processedBy: req.user._id
     };
 
-    if (req.body.isCompleted === 'true') {
-      finishingData.endTime = new Date();
-    }
-
     const finishing = new Finishing(finishingData);
     await finishing.save();
-
     await finishing.populate('processedBy', 'name username');
+
+    // Send notification to supervisors about process start
+    try {
+      await notifySupervisorOfFinishingStatus(
+        finishing.partComponentId,
+        'Started',
+        finishing.operatorName,
+        finishing.createdAt
+      );
+    } catch (notificationError) {
+      console.error('Failed to send finishing start notification:', notificationError);
+      // Don't fail the creation if notification fails
+    }
 
     res.status(201).json(finishing);
   } catch (error) {
@@ -49,13 +67,15 @@ router.get('/', auth, async (req, res) => {
     const limit = parseInt(req.query.limit) || 10;
     const skip = (page - 1) * limit;
 
-    const finishingRecords = await Finishing.find()
-      .populate('processedBy', 'name username')
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(limit);
-
-    const total = await Finishing.countDocuments();
+    const [finishingRecords, total] = await Promise.all([
+      Finishing.find()
+        .populate('processedBy', 'name username')
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .lean(),
+      Finishing.countDocuments()
+    ]);
 
     res.json({
       finishingRecords,
@@ -94,6 +114,12 @@ router.put('/:id', auth, [
   body('operatorName').optional().notEmpty().withMessage('Operator name cannot be empty'),
   body('remarks').optional().isString(),
   body('duration').optional().isString(),
+  body('totalDurationSeconds').optional().isNumeric(),
+  body('workingDurationSeconds').optional().isNumeric(),
+  body('totalPauseDurationSeconds').optional().isNumeric(),
+  body('pauseCount').optional().isNumeric(),
+  body('pauses').optional().isArray(),
+  body('status').optional().isIn(['in_progress', 'completed']),
   body('isCompleted').optional().isBoolean()
 ], async (req, res) => {
   try {
@@ -103,9 +129,19 @@ router.put('/:id', auth, [
     }
 
     const updateData = { ...req.body };
+    if (req.body.isCompleted !== undefined) {
+      updateData.isCompleted = req.body.isCompleted === 'true' || req.body.isCompleted === true;
+    }
+    
+    // If status is completed, set isCompleted to true
+    if (req.body.status === 'completed') {
+      updateData.isCompleted = true;
+    }
 
-    if (req.body.isCompleted === 'true' && !updateData.endTime) {
-      updateData.endTime = new Date();
+    // Get the current finishing record before update to detect changes
+    const currentFinishing = await Finishing.findById(req.params.id);
+    if (!currentFinishing) {
+      return res.status(404).json({ message: 'Finishing record not found' });
     }
 
     const finishing = await Finishing.findByIdAndUpdate(
@@ -118,9 +154,65 @@ router.put('/:id', auth, [
       return res.status(404).json({ message: 'Finishing record not found' });
     }
 
+    // Send notifications based on changes
+    try {
+      // Check for status changes
+      if (req.body.status && req.body.status !== currentFinishing.status) {
+        if (req.body.status === 'completed') {
+          await notifySupervisorOfFinishingStatus(
+            finishing.partComponentId,
+            'Ended',
+            finishing.operatorName,
+            new Date()
+          );
+        }
+      }
+
+      // Check for pause with remarks
+      if (req.body.pauses && Array.isArray(req.body.pauses)) {
+        const newPauses = req.body.pauses;
+        const currentPauses = currentFinishing.pauses || [];
+
+        // Find new pauses with remarks
+        for (const newPause of newPauses) {
+          if (newPause.remarks && newPause.remarks.trim()) {
+            // Check if this pause is new or updated
+            const existingPause = currentPauses.find(cp =>
+              cp.startTime.getTime() === new Date(newPause.startTime).getTime()
+            );
+
+            if (!existingPause || existingPause.remarks !== newPause.remarks) {
+              // This is a new pause with remark or remark was updated
+              await notifyAdminOfPauseWithRemark(
+                finishing.partComponentId,
+                finishing.operatorName,
+                newPause.remarks,
+                new Date()
+              );
+              break; // Only send one notification per update
+            }
+          }
+        }
+      }
+
+      // Check if manually marked as completed
+      if (req.body.isCompleted === true && currentFinishing.isCompleted !== true) {
+        await notifySupervisorOfFinishingStatus(
+          finishing.partComponentId,
+          'Ended',
+          finishing.operatorName,
+          new Date()
+        );
+      }
+
+    } catch (notificationError) {
+      console.error('Failed to send finishing update notification:', notificationError);
+      // Don't fail the update if notification fails
+    }
+
     res.json(finishing);
   } catch (error) {
-    console.error(error);
+    console.error('Update error:', error);
     res.status(500).json({ message: 'Server error' });
   }
 });
@@ -171,9 +263,7 @@ router.get('/stats/tools', auth, async (req, res) => {
           }
         }
       },
-      {
-        $sort: { count: -1 }
-      }
+      { $sort: { count: -1 } }
     ]);
 
     res.json(toolStats);

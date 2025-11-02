@@ -35,6 +35,43 @@ const finishingSchema = new mongoose.Schema({
   duration: {
     type: String // Format: "HH:MM:SS"
   },
+  totalDurationSeconds: {
+    type: Number
+  },
+  workingDurationSeconds: {
+    type: Number
+  },
+  totalPauseDurationSeconds: {
+    type: Number
+  },
+  pauseCount: {
+    type: Number,
+    default: 0
+  },
+  pauses: [{
+    startTime: {
+      type: Date,
+      required: true
+    },
+    endTime: {
+      type: Date,
+      required: true
+    },
+    durationSeconds: {
+      type: Number,
+      required: true
+    },
+    remarks: {
+      type: String,
+      required: true,
+      trim: true
+    }
+  }],
+  status: {
+    type: String,
+    enum: ['in_progress', 'completed'],
+    default: 'in_progress'
+  },
   isCompleted: {
     type: Boolean,
     default: false

@@ -1,33 +1,68 @@
-name: trackpro
-description: Manufacturing Operations Management System
-
+# File: pubspec.yaml
+name: supervisor_dashboard
+description: Supervisor Dashboard with Excel Upload Integration for MongoDB Backend.
 publish_to: 'none'
 
 version: 1.0.0+1
 
 environment:
-  sdk: '>=2.19.0 <4.0.0'
+  sdk: '>=3.0.0 <4.0.0'
 
 dependencies:
   flutter:
     sdk: flutter
-  cupertino_icons: ^1.0.2
+
+  # HTTP & API
+  dio: ^5.3.0
   http: ^1.1.0
-  shared_preferences: ^2.2.2
-  image_picker: ^1.0.4
-  camera: ^0.10.5+5
-  path_provider: ^2.1.1
-  path: ^1.8.3
+
+  # File handling
   file_picker: ^6.1.1
-  supabase_flutter: ^2.3.4
+  path_provider: ^2.1.0
+  path: ^1.9.0
+  
+  # Camera & Image
+  camera: ^0.10.6
+  image_picker: ^1.0.7
+  
+  # Excel parsing
+  excel: ^4.0.6
+
+  # State management
+  provider: ^6.1.0
+
+  # Local storage
+  shared_preferences: ^2.2.2
+
+  # UI/UX
+  cupertino_icons: ^1.0.2
+  animated_text_kit: ^4.2.2
+  lottie: ^3.1.2
+  shimmer: ^3.0.0
+  flutter_staggered_animations: ^1.1.1
+  rive: ^0.13.13
+  
+  # Date and time utilities
+  intl: ^0.19.0
+
+  # JSON serialization
+  json_annotation: ^4.8.1
+
+  # Utilities
+  uuid: ^4.0.0
+  
+  # Supabase (if needed)
+  supabase_flutter: ^2.0.0
+  fl_chart: ^1.1.1
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  flutter_lints: ^2.0.0
+
+  flutter_lints: ^3.0.0
+  
+  json_serializable: ^6.7.1
+  build_runner: ^2.4.6
 
 flutter:
   uses-material-design: true
-  
-  assets:
-    - assets/

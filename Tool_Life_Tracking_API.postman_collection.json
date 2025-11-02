@@ -1,0 +1,314 @@
+{
+  "info": {
+    "name": "Tool Life Tracking API",
+    "description": "Complete API collection for Tool Life Tracking System",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Master Tools",
+      "item": [
+        {
+          "name": "Create Master Tool",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tool_id\": 5,\n  \"tool_name\": \"CARBIDE DRILL\",\n  \"holder_name\": \"ER32 100GPL\",\n  \"atc_pocket_no\": \"P05\",\n  \"tool_room_no\": \"0\",\n  \"tool_life_threshold\": 3000,\n  \"supervisor_email\": \"supervisor@company.com\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/tool-life/master/create",
+              "host": ["{{base_url}}"],
+              "path": ["api", "tool-life", "master", "create"]
+            }
+          }
+        },
+        {
+          "name": "Get All Master Tools",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/tool-life/master/all",
+              "host": ["{{base_url}}"],
+              "path": ["api", "tool-life", "master", "all"]
+            }
+          }
+        },
+        {
+          "name": "Update Tool Threshold",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tool_life_threshold\": 3000,\n  \"supervisor_email\": \"supervisor@company.com\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/tool-life/master/5",
+              "host": ["{{base_url}}"],
+              "path": ["api", "tool-life", "master", "5"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Tool Usage",
+      "item": [
+        {
+          "name": "Record Tool Usage - AMS-141",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tool_id\": 5,\n  \"component_id\": \"AMS-141\",\n  \"no_of_holes\": 43,\n  \"cutting_length\": 23,\n  \"operator_id\": \"OP001\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/tool-life/usage/record",
+              "host": ["{{base_url}}"],
+              "path": ["api", "tool-life", "usage", "record"]
+            }
+          }
+        },
+        {
+          "name": "Record Tool Usage - AMS-915",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tool_id\": 5,\n  \"component_id\": \"AMS-915\",\n  \"no_of_holes\": 50,\n  \"cutting_length\": 15,\n  \"operator_id\": \"OP001\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/tool-life/usage/record",
+              "host": ["{{base_url}}"],
+              "path": ["api", "tool-life", "usage", "record"]
+            }
+          }
+        },
+        {
+          "name": "Record Tool Usage - AMS-103 (WARNING)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tool_id\": 5,\n  \"component_id\": \"AMS-103\",\n  \"no_of_holes\": 42,\n  \"cutting_length\": 30,\n  \"operator_id\": \"OP001\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/tool-life/usage/record",
+              "host": ["{{base_url}}"],
+              "path": ["api", "tool-life", "usage", "record"]
+            }
+          }
+        },
+        {
+          "name": "Record Tool Usage - AMS-477 (CRITICAL)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tool_id\": 5,\n  \"component_id\": \"AMS-477\",\n  \"no_of_holes\": 1,\n  \"cutting_length\": 5,\n  \"operator_id\": \"OP001\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/tool-life/usage/record",
+              "host": ["{{base_url}}"],
+              "path": ["api", "tool-life", "usage", "record"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Tool Status",
+      "item": [
+        {
+          "name": "Get Tool Status",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/tool-life/5/status",
+              "host": ["{{base_url}}"],
+              "path": ["api", "tool-life", "5", "status"]
+            }
+          }
+        },
+        {
+          "name": "Get Tool History",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/tool-life/5/history",
+              "host": ["{{base_url}}"],
+              "path": ["api", "tool-life", "5", "history"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Alerts",
+      "item": [
+        {
+          "name": "Get Active Alerts",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/tool-life/alerts/active",
+              "host": ["{{base_url}}"],
+              "path": ["api", "tool-life", "alerts", "active"]
+            }
+          }
+        },
+        {
+          "name": "Send Notification",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"alert_id\": \"ALERT_ID_HERE\",\n  \"supervisor_email\": \"supervisor@company.com\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/tool-life/alerts/notify",
+              "host": ["{{base_url}}"],
+              "path": ["api", "tool-life", "alerts", "notify"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Maintenance",
+      "item": [
+        {
+          "name": "Reset Tool",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"maintenance_notes\": \"Tool replaced with new one\",\n  \"maintenance_date\": \"2025-01-15T10:00:00Z\",\n  \"technician_id\": \"TECH001\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/tool-life/5/reset",
+              "host": ["{{base_url}}"],
+              "path": ["api", "tool-life", "5", "reset"]
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:3000",
+      "type": "string"
+    },
+    {
+      "key": "token",
+      "value": "YOUR_JWT_TOKEN_HERE",
+      "type": "string"
+    }
+  ]
+}

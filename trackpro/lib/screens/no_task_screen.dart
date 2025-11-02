@@ -3,6 +3,8 @@ import '../services/api_service.dart';
 import 'login_screen.dart';
 
 class NoTaskScreen extends StatelessWidget {
+  const NoTaskScreen({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -10,7 +12,7 @@ class NoTaskScreen extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
-        title: Text(
+        title: const Text(
           'TrackPro',
           style: TextStyle(
             color: Colors.black,
@@ -20,12 +22,12 @@ class NoTaskScreen extends StatelessWidget {
         ),
         actions: [
           IconButton(
-            icon: Icon(Icons.logout, color: Colors.black),
+            icon: const Icon(Icons.logout, color: Colors.black),
             onPressed: () async {
               await ApiService.removeToken();
               Navigator.pushReplacement(
                 context,
-                MaterialPageRoute(builder: (context) => LoginScreen()),
+                MaterialPageRoute(builder: (context) => const LoginScreen()),
               );
             },
           ),
@@ -40,7 +42,7 @@ class NoTaskScreen extends StatelessWidget {
               size: 80,
               color: Colors.grey[400],
             ),
-            SizedBox(height: 20),
+            const SizedBox(height: 20),
             Text(
               'No Task Assigned',
               style: TextStyle(
@@ -49,7 +51,7 @@ class NoTaskScreen extends StatelessWidget {
                 color: Colors.grey[700],
               ),
             ),
-            SizedBox(height: 10),
+            const SizedBox(height: 10),
             Text(
               'Please contact your supervisor\nto get a task assigned.',
               textAlign: TextAlign.center,

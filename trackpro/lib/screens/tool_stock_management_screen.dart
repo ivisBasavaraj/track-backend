@@ -9,7 +9,7 @@ import '../widgets/modern_card.dart';
 import '../widgets/modern_button.dart' hide FloatingActionButton;
 import '../widgets/modern_search.dart';
 import '../widgets/modern_loading.dart';
-import '../utils/import_stock_data.dart';
+import '../utils/csv_parser.dart';
 
 class ToolStockManagementScreen extends StatefulWidget {
   const ToolStockManagementScreen({super.key});
@@ -169,6 +169,68 @@ class _ToolStockManagementScreenState extends State<ToolStockManagementScreen>
         duration: const Duration(seconds: 3),
       ),
     );
+  }
+
+  Future<void> _importCsvData() async {
+    final csvData = await CsvParser.pickAndParseCsv();
+    if (csvData == null) return;
+
+    if (!mounted) return;
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        title: const Text('Importing Tools'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const CircularProgressIndicator(),
+            const SizedBox(height: 20),
+            Text('Importing ${csvData.length} tools...'),
+          ],
+        ),
+      ),
+    );
+
+    try {
+      final tools = csvData.map((row) {
+        final stock = int.tryParse(row['currentStock']?.toString() ?? '0') ?? 0;
+        return {
+          'toolName': row['toolName'] ?? '',
+          'currentStock': stock,
+          'minimumStock': 5,
+          'maximumStock': stock + 50,
+          'reorderLevel': 10,
+          'reorderQuantity': 20,
+          'unit': 'pieces',
+          'location': 'Tool Room',
+          'notes': row['remarks'] ?? '',
+        };
+      }).toList();
+
+      final result = await ApiService.batchCreateToolStocks(tools);
+
+      if (mounted) {
+        Navigator.of(context).pop();
+        
+        if (result['success']) {
+          final data = result['data'];
+          final success = data['success'] ?? 0;
+          final failed = data['failed'] ?? 0;
+          _showSuccessSnackbar('Imported $success/${csvData.length} tools${failed > 0 ? " ($failed failed)" : ""}');
+        } else {
+          _showErrorSnackbar(result['message'] ?? 'Import failed');
+        }
+        
+        _loadStocks();
+      }
+    } catch (e) {
+      if (mounted) {
+        Navigator.of(context).pop();
+        _showErrorSnackbar('Import failed: $e');
+      }
+    }
   }
 
   void _showSuccessSnackbar(String message) {
@@ -735,51 +797,7 @@ class _ToolStockManagementScreenState extends State<ToolStockManagementScreen>
       actions: [
         IconButton(
           icon: const Icon(Icons.upload_file),
-          onPressed: () {
-            showDialog(
-              context: context,
-              builder: (context) => AlertDialog(
-                title: const Text('Import Stock Data'),
-                content: const Text(
-                  'This will import 48 tools from the HKL Tool Master List.\n\nThis may take a few minutes. Continue?',
-                ),
-                actions: [
-                  TextButton(
-                    onPressed: () => Navigator.pop(context),
-                    child: const Text('Cancel'),
-                  ),
-                  ElevatedButton(
-                    onPressed: () async {
-                      Navigator.pop(context);
-                      showDialog(
-                        context: context,
-                        barrierDismissible: false,
-                        builder: (context) => const AlertDialog(
-                          content: Row(
-                            children: [
-                              CircularProgressIndicator(),
-                              SizedBox(width: 20),
-                              Text('Importing data...'),
-                            ],
-                          ),
-                        ),
-                      );
-                      try {
-                        await importStockData();
-                        Navigator.pop(context);
-                        _showSuccessSnackbar('48 tools imported successfully');
-                        _loadStocks();
-                      } catch (e) {
-                        Navigator.pop(context);
-                        _showErrorSnackbar('Import failed: $e');
-                      }
-                    },
-                    child: const Text('Import'),
-                  ),
-                ],
-              ),
-            );
-          },
+          onPressed: _importCsvData,
           tooltip: 'Import CSV Data',
         ),
       ],
@@ -797,25 +815,26 @@ class _ToolStockManagementScreenState extends State<ToolStockManagementScreen>
           ),
           child: SafeArea(
             child: Padding(
-              padding: const EdgeInsets.all(24),
+              padding: const EdgeInsets.all(16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
                     'Tool Stock Management',
-                    style: AppTheme.bodyMedium.copyWith(
+                    style: AppTheme.bodySmall.copyWith(
                       color: Colors.white.withOpacity(0.9),
                     ),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 4),
                   Text(
                     'Manage and track tool inventory',
-                    style: AppTheme.headlineMedium.copyWith(
+                    style: AppTheme.bodyLarge.copyWith(
                       color: Colors.white,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 8),
                   ModernSearchBar(
                     controller: _searchController,
                     hintText: 'Search tools...',

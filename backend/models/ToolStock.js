@@ -6,7 +6,6 @@ const toolStockSchema = new mongoose.Schema(
     toolId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'MasterTool',
-      required: [true, 'Tool ID is required'],
       index: true
     },
 

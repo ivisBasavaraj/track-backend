@@ -398,43 +398,55 @@ class _ModernAdminDashboardState extends State<ModernAdminDashboard>
   }
 
   Widget _buildStatsGrid() {
-    return ModernDashboardStats(
-      stats: [
-        DashboardStat(
-          title: 'Total Production',
-          value: (_dashboardData['totalUnits'] ?? 0),
-          subtitle: 'Units completed',
-          icon: Icons.precision_manufacturing,
-          color: AppTheme.primaryColor,
-          trend: const StatTrend(percentage: 12.0, isPositive: true),
-        ),
-        DashboardStat(
-          title: 'Quality Rate',
-          value: (_dashboardData['qualityRate'] ?? 0),
-          subtitle: 'Quality assurance',
-          icon: Icons.verified,
-          color: AppTheme.successColor,
-          isDecimal: true,
-          trend: const StatTrend(percentage: 2.3, isPositive: true),
-        ),
-        DashboardStat(
-          title: 'Active Tools',
-          value: (_dashboardData['toolsInUse'] ?? 0),
-          subtitle: 'Currently in use',
-          icon: Icons.build_circle,
-          color: AppTheme.warningColor,
-          trend: const StatTrend(percentage: 5.0, isPositive: true),
-        ),
-        DashboardStat(
-          title: 'System Uptime',
-          value: (_dashboardData['systemUptime'] ?? 0),
-          subtitle: 'Reliability score',
-          icon: Icons.trending_up,
-          color: AppTheme.infoColor,
-          isDecimal: true,
-          trend: const StatTrend(percentage: 0.2, isPositive: true),
-        ),
-      ],
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final screenWidth = constraints.maxWidth;
+        final bool isMobile = screenWidth < 600;
+        final bool isTablet = screenWidth < 1024;
+        final int crossAxisCount = isMobile ? 1 : isTablet ? 2 : 4;
+
+        return ModernDashboardStats(
+          stats: [
+            DashboardStat(
+              title: 'Total Production',
+              value: (_dashboardData['totalUnits'] ?? 0),
+              subtitle: 'Units completed',
+              icon: Icons.precision_manufacturing,
+              color: AppTheme.primaryColor,
+              trend: const StatTrend(percentage: 12.0, isPositive: true),
+            ),
+            DashboardStat(
+              title: 'Quality Rate',
+              value: (_dashboardData['qualityRate'] ?? 0),
+              subtitle: 'Quality assurance',
+              icon: Icons.verified,
+              color: AppTheme.successColor,
+              isDecimal: true,
+              trend: const StatTrend(percentage: 2.3, isPositive: true),
+            ),
+            DashboardStat(
+              title: 'Active Tools',
+              value: (_dashboardData['toolsInUse'] ?? 0),
+              subtitle: 'Currently in use',
+              icon: Icons.build_circle,
+              color: AppTheme.warningColor,
+              trend: const StatTrend(percentage: 5.0, isPositive: true),
+            ),
+            DashboardStat(
+              title: 'System Uptime',
+              value: (_dashboardData['systemUptime'] ?? 0),
+              subtitle: 'Reliability score',
+              icon: Icons.trending_up,
+              color: AppTheme.infoColor,
+              isDecimal: true,
+              trend: const StatTrend(percentage: 0.2, isPositive: true),
+            ),
+          ],
+          crossAxisCount: crossAxisCount,
+          crossAxisSpacing: isMobile ? 12 : isTablet ? 14 : 16,
+          mainAxisSpacing: isMobile ? 12 : isTablet ? 14 : 16,
+        );
+      },
     );
   }
 

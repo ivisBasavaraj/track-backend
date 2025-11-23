@@ -3,7 +3,8 @@
 - **Tech Stack**: Flutter Web & Mobile client with Node.js/Express backend. MongoDB is the primary datastore.
 - **Frontend Path**: `trackpro\lib` contains Dart screens, services, and models. State is managed with StatefulWidgets and service classes.
 - **Backend Path**: `backend/` houses the Express API, using routes under `routes/` and Mongoose models in `models/`.
-- **Authentication**: Supervisors authenticate through `/api/auth/login` (Express). Flutter clients must use base URL `http://localhost:3001/api` during local development.
+- **Authentication**: Supervisors authenticate through `/api/auth/login` (Express). Flutter clients must use base URL `https://track-backend-production.up.railway.app/
+/api` during local development.
 - **Excel Uploads**: File uploads rely on `ToolsService` & `ApiService`. On web targets, use in-memory bytes rather than file system paths.
 - **Known Issues**:
   - Duplicate MongoDB index definitions trigger warnings; plan to consolidate indexes.

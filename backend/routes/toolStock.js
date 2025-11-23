@@ -426,4 +426,104 @@ router.post('/:id/remove-stock', auth, supervisorAuth, async (req, res) => {
   }
 });
 
+/**
+ * @route   POST /api/tool-stock/batch
+ * @desc    Batch create tool stocks
+ * @access  Private/Supervisor
+ * @body    { tools: Array<ToolStockData> }
+ */
+router.post('/batch', auth, supervisorAuth, async (req, res) => {
+  try {
+    const { tools } = req.body;
+
+    if (!Array.isArray(tools) || tools.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Tools array is required'
+      });
+    }
+
+    const results = {
+      success: 0,
+      failed: 0,
+      errors: []
+    };
+
+    for (let i = 0; i < tools.length; i++) {
+      const tool = tools[i];
+      try {
+        const {
+          toolName,
+          atcPocketNo = '',
+          toolRoomNo = '',
+          currentStock,
+          minimumStock = 5,
+          maximumStock = 50,
+          reorderLevel = 10,
+          reorderQuantity = 20,
+          unit = 'pieces',
+          location = 'Tool Room',
+          costPerUnit = 0,
+          notes = ''
+        } = tool;
+
+        if (!toolName || toolName.trim() === '') {
+          results.failed++;
+          results.errors.push({ index: i, error: 'Tool name is required' });
+          continue;
+        }
+
+        // Check if stock already exists
+        const existingStock = await ToolStock.findOne({
+          toolName: toolName.trim(),
+          atcPocketNo: atcPocketNo.trim()
+        });
+
+        if (existingStock) {
+          results.failed++;
+          results.errors.push({ index: i, error: 'Tool already exists' });
+          continue;
+        }
+
+        const newStock = new ToolStock({
+          toolName: toolName.trim(),
+          atcPocketNo: atcPocketNo.trim(),
+          toolRoomNo: toolRoomNo.trim(),
+          currentStock: parseInt(currentStock) || 0,
+          minimumStock: parseInt(minimumStock) || 5,
+          maximumStock: parseInt(maximumStock) || 50,
+          reorderLevel: parseInt(reorderLevel) || 10,
+          reorderQuantity: parseInt(reorderQuantity) || 20,
+          unit: unit.trim(),
+          location: location.trim(),
+          costPerUnit: parseFloat(costPerUnit) || 0,
+          notes: notes.trim(),
+          lastUpdatedBy: req.user._id,
+          lastUpdatedByName: req.user.name || req.user.username,
+          lastRestockDate: new Date()
+        });
+
+        await newStock.save();
+        results.success++;
+      } catch (error) {
+        results.failed++;
+        results.errors.push({ index: i, error: error.message });
+      }
+    }
+
+    return res.json({
+      success: true,
+      message: `Batch import completed: ${results.success} success, ${results.failed} failed`,
+      data: results
+    });
+  } catch (error) {
+    console.error('Error in batch import:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to batch import tools',
+      error: error.message
+    });
+  }
+});
+
 module.exports = router;

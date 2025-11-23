@@ -68,9 +68,9 @@ Future<void> importStockData() async {
         notes: stock['remarks'] as String,
       );
       print('✓ Added: ${stock['toolName']}');
-      await Future.delayed(const Duration(milliseconds: 200));
     } catch (e) {
-      print('✗ Failed: ${stock['toolName']} - $e');
+      print('✗ Skipped: ${stock['toolName']}');
     }
+    await Future.delayed(const Duration(milliseconds: 500));
   }
 }

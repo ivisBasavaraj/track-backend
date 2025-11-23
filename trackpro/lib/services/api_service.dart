@@ -6,7 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class ApiService {
-  static const String baseUrl = 'http://localhost:3001/api';
+  static const String baseUrl = 'https://hkl-backend.onrender.com/api';
   static final supabase = Supabase.instance.client;
   
   // Get stored token
@@ -851,6 +851,28 @@ class ApiService {
         return {'success': true, 'data': data};
       } else {
         return {'success': false, 'message': data['message'] ?? 'Failed to remove stock'};
+      }
+    } catch (e) {
+      return {'success': false, 'message': 'Network error: $e'};
+    }
+  }
+
+  // Batch create tool stocks
+  static Future<Map<String, dynamic>> batchCreateToolStocks(List<Map<String, dynamic>> tools) async {
+    try {
+      final headers = await getHeaders();
+      final response = await http.post(
+        Uri.parse('$baseUrl/tool-stock/batch'),
+        headers: headers,
+        body: jsonEncode({'tools': tools}),
+      );
+      
+      final data = jsonDecode(response.body);
+      
+      if (response.statusCode == 200) {
+        return {'success': true, 'data': data['data']};
+      } else {
+        return {'success': false, 'message': data['message'] ?? 'Batch import failed'};
       }
     } catch (e) {
       return {'success': false, 'message': 'Network error: $e'};

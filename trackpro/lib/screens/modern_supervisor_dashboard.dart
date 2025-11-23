@@ -365,43 +365,55 @@ class _ModernSupervisorDashboardState extends State<ModernSupervisorDashboard>
   }
 
   Widget _buildProductionStats() {
-    return ModernDashboardStats(
-      stats: [
-        DashboardStat(
-          title: 'Active Operations',
-          value: (_dashboardData['activeOperations'] ?? 0),
-          subtitle: 'Currently running',
-          icon: Icons.play_circle_filled,
-          color: AppTheme.successColor,
-        ),
-        DashboardStat(
-          title: 'Team Efficiency',
-          value: (_dashboardData['efficiency'] ?? 0),
-          subtitle: 'Overall performance',
-          icon: Icons.trending_up,
-          color: AppTheme.primaryColor,
-          isDecimal: true,
-          trend: const StatTrend(percentage: 3.2, isPositive: true),
-        ),
-        DashboardStat(
-          title: 'Quality Score',
-          value: (_dashboardData['qualityScore'] ?? 0),
-          subtitle: 'Quality metrics',
-          icon: Icons.verified,
-          color: AppTheme.infoColor,
-          isDecimal: true,
-          trend: const StatTrend(percentage: 1.8, isPositive: true),
-        ),
-        DashboardStat(
-          title: 'Safety Days',
-          value: (_dashboardData['safetyIncidents'] ?? 0),
-          subtitle: 'Incident-free',
-          icon: Icons.security,
-          color: _dashboardData['safetyIncidents'] == 0 
-              ? AppTheme.successColor 
-              : AppTheme.warningColor,
-        ),
-      ],
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final screenWidth = constraints.maxWidth;
+        final bool isMobile = screenWidth < 600;
+        final bool isTablet = screenWidth < 1024;
+        final int crossAxisCount = isMobile ? 1 : isTablet ? 2 : 4;
+
+        return ModernDashboardStats(
+          stats: [
+            DashboardStat(
+              title: 'Active Operations',
+              value: (_dashboardData['activeOperations'] ?? 0),
+              subtitle: 'Currently running',
+              icon: Icons.play_circle_filled,
+              color: AppTheme.successColor,
+            ),
+            DashboardStat(
+              title: 'Team Efficiency',
+              value: (_dashboardData['efficiency'] ?? 0),
+              subtitle: 'Overall performance',
+              icon: Icons.trending_up,
+              color: AppTheme.primaryColor,
+              isDecimal: true,
+              trend: const StatTrend(percentage: 3.2, isPositive: true),
+            ),
+            DashboardStat(
+              title: 'Quality Score',
+              value: (_dashboardData['qualityScore'] ?? 0),
+              subtitle: 'Quality metrics',
+              icon: Icons.verified,
+              color: AppTheme.infoColor,
+              isDecimal: true,
+              trend: const StatTrend(percentage: 1.8, isPositive: true),
+            ),
+            DashboardStat(
+              title: 'Safety Days',
+              value: (_dashboardData['safetyIncidents'] ?? 0),
+              subtitle: 'Incident-free',
+              icon: Icons.security,
+              color: _dashboardData['safetyIncidents'] == 0
+                  ? AppTheme.successColor
+                  : AppTheme.warningColor,
+            ),
+          ],
+          crossAxisCount: crossAxisCount,
+          crossAxisSpacing: isMobile ? 12 : isTablet ? 14 : 16,
+          mainAxisSpacing: isMobile ? 12 : isTablet ? 14 : 16,
+        );
+      },
     );
   }
 

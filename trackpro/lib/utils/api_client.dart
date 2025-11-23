@@ -7,8 +7,7 @@ class ApiClient {
 
   ApiClient({
     Dio? dio,
-    this.baseUrl = 'http://localhost:3001/api',
-    List<Interceptor>? interceptors,
+    this.baseUrl = 'https://hkl-backend.onrender.com/api',
   }) : _dio = dio ?? Dio() {
     _dio.options.baseUrl = baseUrl;
     _dio.interceptors.add(InterceptorsWrapper(
@@ -21,9 +20,6 @@ class ApiClient {
         return handler.next(options);
       },
     ));
-    if (interceptors != null) {
-      _dio.interceptors.addAll(interceptors);
-    }
   }
 
   Future<Response<dynamic>> get(

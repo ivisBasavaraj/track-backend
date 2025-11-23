@@ -270,7 +270,21 @@ class _ModernToolViewScreenState extends State<ModernToolViewScreen>
       ),
     ];
 
-    return ModernDashboardStats(stats: stats);
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final screenWidth = constraints.maxWidth;
+        final bool isMobile = screenWidth < 600;
+        final bool isTablet = screenWidth < 1024;
+        final int crossAxisCount = isMobile ? 1 : isTablet ? 2 : 4;
+
+        return ModernDashboardStats(
+          stats: stats,
+          crossAxisCount: crossAxisCount,
+          crossAxisSpacing: isMobile ? 12 : isTablet ? 14 : 16,
+          mainAxisSpacing: isMobile ? 12 : isTablet ? 14 : 16,
+        );
+      },
+    );
   }
 
   Widget _buildSearchSection() {

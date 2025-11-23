@@ -13,10 +13,14 @@ import 'ui/app_theme.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
-  await Supabase.initialize(
-    url: 'https://ynwyjrdrlyyekhxjnzcp.supabase.co',
-    anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inlud3lqcmRybHl5ZWtoeGpuemNwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkxNjIzNjgsImV4cCI6MjA3NDczODM2OH0.UCnWt-Pmhy94i1TZIYBDH4KhWFw3i42eRZ4Ha4BHIwI',
-  );
+  try {
+    await Supabase.initialize(
+      url: 'https://ynwyjrdrlyyekhxjnzcp.supabase.co',
+      anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inlud3lqcmRybHl5ZWtoeGpuemNwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkxNjIzNjgsImV4cCI6MjA3NDczODM2OH0.UCnWt-Pmhy94i1TZIYBDH4KhWFw3i42eRZ4Ha4BHIwI',
+    );
+  } catch (e) {
+    print('Supabase initialization error: $e');
+  }
   
   runApp(const MyApp());
 }

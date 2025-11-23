@@ -34,10 +34,14 @@ class _FinishingScreenState extends State<FinishingScreen> {
   List<Map<String, dynamic>> customToolData = [];
   
   // Timer variables
-  final Stopwatch _stopwatch = Stopwatch();
+  final Stopwatch _settingStopwatch = Stopwatch();
+  final Stopwatch _finishingStopwatch = Stopwatch();
   Timer? _timer;
-  String _elapsedTime = '00:00:00';
-  bool _isRunning = false;
+  String _settingElapsedTime = '00:00:00';
+  String _finishingElapsedTime = '00:00:00';
+  bool _isSettingRunning = false;
+  bool _isFinishingRunning = false;
+  bool _isSettingCompleted = false;
   String _currentPauseRemarks = '';
 
   List<String> tools = [];
@@ -121,11 +125,14 @@ class _FinishingScreenState extends State<FinishingScreen> {
 
   void _startTimer() {
     _timer = Timer.periodic(const Duration(milliseconds: 100), (timer) {
-      if (_stopwatch.isRunning) {
-        setState(() {
-          _elapsedTime = _formatTime(_stopwatch.elapsed);
-        });
-      }
+      setState(() {
+        if (_settingStopwatch.isRunning) {
+          _settingElapsedTime = _formatTime(_settingStopwatch.elapsed);
+        }
+        if (_finishingStopwatch.isRunning) {
+          _finishingElapsedTime = _formatTime(_finishingStopwatch.elapsed);
+        }
+      });
     });
   }
 
@@ -137,11 +144,64 @@ class _FinishingScreenState extends State<FinishingScreen> {
     return '$hours:$minutes:$seconds';
   }
 
-  void _startStopwatch() async {
+  void _startSettingTimer() async {
     if (partComponentId.trim().isEmpty || operatorName.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Please enter Part/Component ID and Operator Name before starting'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+    
+    if (_finishingRecordId == null && selectedTool != null) {
+      final result = await ApiService.createFinishing({
+        'toolUsed': selectedTool!,
+        'toolStatus': 'Setting',
+        'partComponentId': partComponentId.isEmpty ? 'TBD' : partComponentId,
+        'operatorName': operatorName.isEmpty ? 'TBD' : operatorName,
+        'status': 'setting',
+      });
+      
+      if (result['success']) {
+        _finishingRecordId = result['finishing']['_id'];
+      }
+    }
+    
+    setState(() {
+      _settingStopwatch.start();
+      _isSettingRunning = true;
+    });
+  }
+
+  void _stopSettingTimer() async {
+    if (_finishingRecordId != null) {
+      await ApiService.updateFinishing(_finishingRecordId!, {
+        'settingDuration': _formatTime(_settingStopwatch.elapsed),
+        'status': 'setting_completed',
+      });
+    }
+    
+    setState(() {
+      _settingStopwatch.stop();
+      _isSettingRunning = false;
+      _isSettingCompleted = true;
+    });
+    
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Setting completed! You can now start Finishing timer.'),
+        backgroundColor: Colors.green,
+      ),
+    );
+  }
+
+  void _startFinishingTimer() async {
+    if (!_isSettingCompleted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please complete Setting timer before starting Finishing'),
           backgroundColor: Colors.red,
         ),
       );
@@ -171,27 +231,20 @@ class _FinishingScreenState extends State<FinishingScreen> {
       _isPaused = false;
     });
     
-    if (_finishingRecordId == null && selectedTool != null) {
-      final result = await ApiService.createFinishing({
-        'toolUsed': selectedTool!,
+    if (_finishingRecordId != null) {
+      await ApiService.updateFinishing(_finishingRecordId!, {
         'toolStatus': 'Working',
-        'partComponentId': partComponentId.isEmpty ? 'TBD' : partComponentId,
-        'operatorName': operatorName.isEmpty ? 'TBD' : operatorName,
         'status': 'in_progress',
       });
-      
-      if (result['success']) {
-        _finishingRecordId = result['finishing']['_id'];
-      }
     }
     
     setState(() {
-      _stopwatch.start();
-      _isRunning = true;
+      _finishingStopwatch.start();
+      _isFinishingRunning = true;
     });
   }
 
-  void _pauseStopwatch() async {
+  void _pauseFinishingTimer() async {
     final dialogRemarksController = TextEditingController();
     final pauseRemarks = await showDialog<String?>(
       context: context,
@@ -248,32 +301,39 @@ class _FinishingScreenState extends State<FinishingScreen> {
     if (pauseRemarks != null && pauseRemarks.isNotEmpty) {
       setState(() {
         _currentPauseRemarks = pauseRemarks;
-        _stopwatch.stop();
-        _isRunning = false;
+        _finishingStopwatch.stop();
+        _isFinishingRunning = false;
         _pauseStartTime = DateTime.now();
         _isPaused = true;
       });
     }
   }
 
-  void _stopStopwatch() async {
+  void _stopFinishingTimer() async {
     if (_finishingRecordId != null) {
       await ApiService.updateFinishing(_finishingRecordId!, {
         'status': 'completed',
-        'duration': _formatTime(_stopwatch.elapsed),
+        'settingDuration': _formatTime(_settingStopwatch.elapsed),
+        'finishingDuration': _formatTime(_finishingStopwatch.elapsed),
+        'totalDuration': _formatTime(_settingStopwatch.elapsed + _finishingStopwatch.elapsed),
       });
     }
     
     await _showToolUsageDialog();
     
     setState(() {
-      _stopwatch.stop();
-      _stopwatch.reset();
-      _isRunning = false;
+      _settingStopwatch.stop();
+      _settingStopwatch.reset();
+      _finishingStopwatch.stop();
+      _finishingStopwatch.reset();
+      _isSettingRunning = false;
+      _isFinishingRunning = false;
+      _isSettingCompleted = false;
       _currentPauseRemarks = '';
       _pauseStartTime = null;
       _finishingRecordId = null;
-      _elapsedTime = '00:00:00';
+      _settingElapsedTime = '00:00:00';
+      _finishingElapsedTime = '00:00:00';
       _isPaused = false;
       _pauses = [];
       _noOfHolesController.clear();
@@ -541,8 +601,12 @@ class _FinishingScreenState extends State<FinishingScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Timer Section
-            _buildTimerSection(),
+            // Setting Timer Section
+            _buildSettingTimerSection(),
+            const SizedBox(height: 20),
+            
+            // Finishing Timer Section
+            _buildFinishingTimerSection(),
             const SizedBox(height: 30),
 
             // Writing Remarks Card (shown when paused)
@@ -691,7 +755,90 @@ class _FinishingScreenState extends State<FinishingScreen> {
     );
   }
 
-  Widget _buildTimerSection() {
+  Widget _buildSettingTimerSection() {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [Colors.purple[700]!, Colors.purple[400]!],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.purple.withOpacity(0.3),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.settings, color: Colors.white, size: 20),
+              const SizedBox(width: 8),
+              const Text(
+                'Setting Timer',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+              const Spacer(),
+              if (_isSettingCompleted)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.green,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Text(
+                    'Completed',
+                    style: TextStyle(color: Colors.white, fontSize: 12),
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: 15),
+          Center(
+            child: Text(
+              _settingElapsedTime,
+              style: const TextStyle(
+                fontSize: 36,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+                fontFamily: 'monospace',
+              ),
+            ),
+          ),
+          const SizedBox(height: 20),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              _buildTimerButton(
+                'Start',
+                Icons.play_arrow,
+                Colors.green,
+                (_isSettingRunning || _isSettingCompleted) ? null : _startSettingTimer,
+              ),
+              _buildTimerButton(
+                'Stop',
+                Icons.stop,
+                Colors.red,
+                _isSettingRunning ? _stopSettingTimer : null,
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFinishingTimerSection() {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -712,18 +859,37 @@ class _FinishingScreenState extends State<FinishingScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Process Timer',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
-            ),
+          Row(
+            children: [
+              const Icon(Icons.build, color: Colors.white, size: 20),
+              const SizedBox(width: 8),
+              const Text(
+                'Finishing Timer',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+              const Spacer(),
+              if (!_isSettingCompleted)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.orange,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Text(
+                    'Complete Setting First',
+                    style: TextStyle(color: Colors.white, fontSize: 10),
+                  ),
+                ),
+            ],
           ),
           const SizedBox(height: 15),
           Center(
             child: Text(
-              _elapsedTime,
+              _finishingElapsedTime,
               style: const TextStyle(
                 fontSize: 36,
                 fontWeight: FontWeight.bold,
@@ -740,19 +906,19 @@ class _FinishingScreenState extends State<FinishingScreen> {
                 'Start',
                 Icons.play_arrow,
                 Colors.green,
-                _isRunning ? null : _startStopwatch,
+                _isFinishingRunning ? null : _startFinishingTimer,
               ),
               _buildTimerButton(
                 'Pause',
                 Icons.pause,
                 Colors.orange,
-                _isRunning ? _pauseStopwatch : null,
+                _isFinishingRunning ? _pauseFinishingTimer : null,
               ),
               _buildTimerButton(
                 'Stop',
                 Icons.stop,
                 Colors.red,
-                _stopStopwatch,
+                _stopFinishingTimer,
               ),
             ],
           ),
@@ -969,8 +1135,9 @@ class _FinishingScreenState extends State<FinishingScreen> {
       'partComponentId': partComponentId,
       'operatorName': operatorName,
       'remarks': remarks,
-      'duration': _formatTime(_stopwatch.elapsed),
-      'isCompleted': !_isRunning,
+      'settingDuration': _formatTime(_settingStopwatch.elapsed),
+      'finishingDuration': _formatTime(_finishingStopwatch.elapsed),
+      'isCompleted': !_isFinishingRunning,
     };
     
     final result = await ApiService.createFinishing(finishingData);

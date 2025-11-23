@@ -59,8 +59,26 @@ app.use('*', (req, res) => {
   res.status(404).json({ message: 'Route not found' });
 });
 
-// Connect to MongoDB
-connectDB();
+// Connect to MongoDB and create default admin
+const User = require('./models/User');
+
+connectDB().then(async () => {
+  try {
+    const adminExists = await User.findOne({ username: 'admin' });
+    if (!adminExists) {
+      const admin = new User({
+        name: 'Administrator',
+        username: 'admin',
+        password: 'admin123',
+        role: 'Admin'
+      });
+      await admin.save();
+      console.log('✓ Default admin created: admin/admin123');
+    }
+  } catch (err) {
+    console.log('Admin user setup:', err.message);
+  }
+});
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {

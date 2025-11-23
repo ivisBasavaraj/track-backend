@@ -110,14 +110,35 @@ class _ToolViewScreenState extends State<ToolViewScreen> {
   Widget _buildSummaryCards() {
     return Container(
       padding: const EdgeInsets.all(16),
-      child: Row(
-        children: [
-          Expanded(child: _buildStatCard('Tools', '${_metadata?['totalTools'] ?? 0}', Icons.build, Colors.blue)),
-          const SizedBox(width: 12),
-          Expanded(child: _buildStatCard('Holes', '${_metadata?['totalHoles'] ?? 0}', Icons.circle_outlined, Colors.orange)),
-          const SizedBox(width: 12),
-          Expanded(child: _buildStatCard('Length', '${_metadata?['totalCuttingLength'] ?? 0}', Icons.straighten, Colors.green)),
-        ],
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final screenWidth = constraints.maxWidth;
+          final isSmallScreen = screenWidth < 600;
+
+          if (isSmallScreen) {
+            // Stack cards vertically on small screens
+            return Column(
+              children: [
+                _buildStatCard('Tools', '${_metadata?['totalTools'] ?? 0}', Icons.build, Colors.blue),
+                const SizedBox(height: 12),
+                _buildStatCard('Holes', '${_metadata?['totalHoles'] ?? 0}', Icons.circle_outlined, Colors.orange),
+                const SizedBox(height: 12),
+                _buildStatCard('Length', '${_metadata?['totalCuttingLength'] ?? 0}', Icons.straighten, Colors.green),
+              ],
+            );
+          } else {
+            // Use Row layout on larger screens
+            return Row(
+              children: [
+                Expanded(child: _buildStatCard('Tools', '${_metadata?['totalTools'] ?? 0}', Icons.build, Colors.blue)),
+                const SizedBox(width: 12),
+                Expanded(child: _buildStatCard('Holes', '${_metadata?['totalHoles'] ?? 0}', Icons.circle_outlined, Colors.orange)),
+                const SizedBox(width: 12),
+                Expanded(child: _buildStatCard('Length', '${_metadata?['totalCuttingLength'] ?? 0}', Icons.straighten, Colors.green)),
+              ],
+            );
+          }
+        },
       ),
     );
   }

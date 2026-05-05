@@ -5,7 +5,7 @@ import '../utils/api_client.dart';
 class ToolUsageEntryScreen extends StatefulWidget {
   final int? toolId;
 
-  const ToolUsageEntryScreen({Key? key, this.toolId}) : super(key: key);
+  const ToolUsageEntryScreen({super.key, this.toolId});
 
   @override
   State<ToolUsageEntryScreen> createState() => _ToolUsageEntryScreenState();
@@ -152,7 +152,7 @@ class _ToolUsageEntryScreenState extends State<ToolUsageEntryScreen> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               DropdownButtonFormField<String>(
-                value: _selectedComponent,
+                initialValue: _selectedComponent,
                 decoration: const InputDecoration(
                   labelText: 'Component',
                   border: OutlineInputBorder(),

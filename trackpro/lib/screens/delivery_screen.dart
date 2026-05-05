@@ -7,6 +7,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 
 import '../services/api_service.dart';
+import '../ui/app_theme.dart';
 import 'login_screen.dart';
 
 class DeliveryScreen extends StatefulWidget {
@@ -180,16 +181,16 @@ class _DeliveryScreenState extends State<DeliveryScreen> {
   Color _statusColor(String status) {
     switch (status) {
       case 'Dispatched':
-        return const Color(0xFF38BDF8);
+        return AppTheme.accentColor;
       case 'In Transit':
-        return const Color(0xFF34D399);
+        return AppTheme.primaryLight;
       case 'Delivered':
-        return const Color(0xFF22C55E);
+        return AppTheme.successColor;
       case 'Failed':
-        return const Color(0xFFE11D48);
+        return AppTheme.errorColor;
       case 'Pending':
       default:
-        return const Color(0xFF6366F1);
+        return AppTheme.primaryDark;
     }
   }
 
@@ -242,7 +243,7 @@ class _DeliveryScreenState extends State<DeliveryScreen> {
     final ThemeData theme = Theme.of(context);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F7FA),
+      backgroundColor: AppTheme.backgroundColor,
       extendBodyBehindAppBar: true,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
@@ -335,13 +336,13 @@ class _DeliveryScreenState extends State<DeliveryScreen> {
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
               colors: <Color>[
-                Color(0xFF1E40AF),
-                Color(0xFF2563EB),
+                AppTheme.primaryDark,
+                AppTheme.primaryColor,
               ],
             ),
             boxShadow: <BoxShadow>[
               BoxShadow(
-                color: const Color(0xFF1E3A8A).withOpacity(0.25),
+                color: AppTheme.primaryDark.withOpacity(0.25),
                 blurRadius: 36,
                 offset: const Offset(0, 18),
               ),
@@ -432,8 +433,8 @@ class _DeliveryScreenState extends State<DeliveryScreen> {
   Widget _buildDeliveryForm(ThemeData theme) {
     final OutlineInputBorder border = OutlineInputBorder(
       borderRadius: BorderRadius.circular(16),
-      borderSide: BorderSide(
-        color: Colors.black.withOpacity(0.08),
+      borderSide: const BorderSide(
+        color: AppTheme.borderColor,
       ),
     );
 
@@ -448,18 +449,18 @@ class _DeliveryScreenState extends State<DeliveryScreen> {
         prefixIcon: icon != null
             ? Icon(
                 icon,
-                color: const Color(0xFF4C51BF),
+                color: AppTheme.primaryDark,
               )
             : null,
         filled: true,
-        fillColor: Colors.white,
+        fillColor: AppTheme.surfaceColor,
         border: border,
         enabledBorder: border,
         focusedBorder: border.copyWith(
-          borderSide: const BorderSide(color: Color(0xFF6366F1), width: 1.6),
+          borderSide: const BorderSide(color: AppTheme.primaryColor, width: 1.6),
         ),
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
-        labelStyle: TextStyle(color: Colors.black.withOpacity(0.6)),
+        labelStyle: const TextStyle(color: AppTheme.textSecondary),
       );
     }
 
@@ -470,8 +471,8 @@ class _DeliveryScreenState extends State<DeliveryScreen> {
         child: Container(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(28),
-            border: Border.all(color: Colors.white.withOpacity(0.16)),
-            color: Colors.white.withOpacity(0.78),
+            border: Border.all(color: AppTheme.borderColor.withOpacity(0.5)),
+            color: AppTheme.surfaceColor.withOpacity(0.9),
           ),
           child: Padding(
             padding: const EdgeInsets.all(24),
@@ -622,15 +623,15 @@ class _DeliveryScreenState extends State<DeliveryScreen> {
                   Container(
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(18),
-                      border: Border.all(color: Colors.black.withOpacity(0.08)),
-                      color: Colors.white,
+                      border: Border.all(color: AppTheme.borderColor),
+                      color: AppTheme.surfaceColor,
                     ),
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     child: DropdownButtonHideUnderline(
                       child: DropdownButton<String>(
                         value: _deliveryStatus,
                         isExpanded: true,
-                        icon: const Icon(Icons.expand_more_rounded),
+                        icon: const Icon(Icons.expand_more_rounded, color: AppTheme.textSecondary),
                         borderRadius: BorderRadius.circular(16),
                         items: _statusOptions.map((String value) {
                           return DropdownMenuItem<String>(
@@ -646,10 +647,13 @@ class _DeliveryScreenState extends State<DeliveryScreen> {
                                   ),
                                 ),
                                 const SizedBox(width: 12),
-                                Text(value,
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.w600,
-                                    )),
+                                Text(
+                                  value,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w600,
+                                    color: AppTheme.textPrimary,
+                                  ),
+                                ),
                               ],
                             ),
                           );
@@ -675,8 +679,8 @@ class _DeliveryScreenState extends State<DeliveryScreen> {
                       width: double.infinity,
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: Colors.black.withOpacity(0.08)),
-                        color: Colors.white,
+                        border: Border.all(color: AppTheme.borderColor),
+                        color: AppTheme.surfaceColor,
                       ),
                       child: _deliveryProofImage != null
                           ? ClipRRect(
@@ -686,27 +690,27 @@ class _DeliveryScreenState extends State<DeliveryScreen> {
                                 fit: BoxFit.cover,
                               ),
                             )
-                          : Column(
+                          : const Column(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: <Widget>[
                                 Icon(
                                   Icons.cloud_upload_outlined,
                                   size: 36,
-                                  color: Colors.black.withOpacity(0.55),
+                                  color: AppTheme.textSecondary,
                                 ),
-                                const SizedBox(height: 12),
+                                SizedBox(height: 12),
                                 Text(
                                   'Tap to capture delivery proof',
                                   style: TextStyle(
-                                    color: Colors.black.withOpacity(0.7),
+                                    color: AppTheme.textPrimary,
                                     fontWeight: FontWeight.w600,
                                   ),
                                 ),
-                                const SizedBox(height: 6),
+                                SizedBox(height: 6),
                                 Text(
                                   'Attach recipient signature or delivery photo',
                                   style: TextStyle(
-                                    color: Colors.black.withOpacity(0.45),
+                                    color: AppTheme.textSecondary,
                                     fontSize: 12,
                                   ),
                                 ),
@@ -732,7 +736,7 @@ class _DeliveryScreenState extends State<DeliveryScreen> {
                     child: ElevatedButton(
                       onPressed: _isSubmitting ? null : _submitDelivery,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF2563EB),
+                        backgroundColor: AppTheme.primaryColor,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(16),
                         ),
@@ -783,7 +787,7 @@ class _DeliveryScreenState extends State<DeliveryScreen> {
             Text(
               'Auto-updates with status',
               style: theme.textTheme.bodySmall!.copyWith(
-                color: Colors.black54,
+                color: AppTheme.textSecondary,
               ),
             ),
           ],
@@ -815,20 +819,20 @@ class _DeliveryScreenState extends State<DeliveryScreen> {
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
                             colors: <Color>[
-                              Color(0xFF2563EB),
-                              Color(0xFF1D4ED8),
+                              AppTheme.primaryColor,
+                              AppTheme.primaryDark,
                             ],
                           )
-                        : const LinearGradient(colors: <Color>[Colors.white, Colors.white]),
+                        : const LinearGradient(
+                            colors: <Color>[AppTheme.surfaceColor, AppTheme.surfaceColor],
+                          ),
                     border: Border.all(
-                      color: isSelected
-                          ? Colors.transparent
-                          : Colors.black.withOpacity(0.08),
+                      color: isSelected ? Colors.transparent : AppTheme.borderColor,
                     ),
                     boxShadow: isSelected
                         ? <BoxShadow>[
                             BoxShadow(
-                              color: const Color(0xFF1E3A8A).withOpacity(0.22),
+                              color: AppTheme.primaryDark.withOpacity(0.22),
                               blurRadius: 18,
                               offset: const Offset(0, 12),
                             ),
@@ -841,7 +845,7 @@ class _DeliveryScreenState extends State<DeliveryScreen> {
                       Text(
                         _formatTimelineWeekday(date),
                         style: TextStyle(
-                          color: isSelected ? Colors.white70 : Colors.black54,
+                          color: isSelected ? Colors.white70 : AppTheme.textSecondary,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -849,7 +853,7 @@ class _DeliveryScreenState extends State<DeliveryScreen> {
                       Text(
                         _formatTimelineDate(date),
                         style: TextStyle(
-                          color: isSelected ? Colors.white : Colors.black87,
+                          color: isSelected ? Colors.white : AppTheme.textPrimary,
                           fontSize: 16,
                           fontWeight: FontWeight.w700,
                         ),
@@ -879,12 +883,12 @@ class _DeliveryScreenState extends State<DeliveryScreen> {
                           width: 14,
                           height: 14,
                           decoration: BoxDecoration(
-                            color: isCompleted ? const Color(0xFF22C55E) : Colors.white,
+                            color: isCompleted ? AppTheme.successColor : AppTheme.surfaceColor,
                             borderRadius: BorderRadius.circular(7),
                             border: Border.all(
                               color: isCompleted
-                                  ? const Color(0xFF22C55E)
-                                  : Colors.black.withOpacity(0.12),
+                                  ? AppTheme.successColor
+                                  : AppTheme.borderColor,
                               width: 3,
                             ),
                           ),
@@ -899,11 +903,14 @@ class _DeliveryScreenState extends State<DeliveryScreen> {
                                 begin: Alignment.topCenter,
                                 end: Alignment.bottomCenter,
                                 colors: isCompleted
-                                    ? const <Color>[
-                                        Color(0xFF22C55E),
-                                        Color(0xFF4ADE80),
+                                    ? <Color>[
+                                        AppTheme.successColor,
+                                        AppTheme.successColor.withOpacity(0.7),
                                       ]
-                                    : <Color>[Colors.black.withOpacity(0.08), Colors.black.withOpacity(0.05)],
+                                    : <Color>[
+                                        AppTheme.borderColor,
+                                        AppTheme.borderColor.withOpacity(0.6),
+                                      ],
                               ),
                             ),
                           ),
@@ -917,12 +924,12 @@ class _DeliveryScreenState extends State<DeliveryScreen> {
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(18),
                           color: isCompleted
-                              ? const Color(0xFFE5F9E9)
-                              : Colors.white.withOpacity(0.92),
+                              ? AppTheme.successColor.withOpacity(0.12)
+                              : AppTheme.surfaceColor,
                           border: Border.all(
                             color: isCompleted
-                                ? const Color(0xFF86EFAC)
-                                : Colors.black.withOpacity(0.06),
+                                ? AppTheme.successColor.withOpacity(0.5)
+                                : AppTheme.borderColor,
                           ),
                         ),
                         child: Column(
@@ -933,15 +940,15 @@ class _DeliveryScreenState extends State<DeliveryScreen> {
                               style: TextStyle(
                                 fontWeight: FontWeight.w700,
                                 color: isCompleted
-                                    ? const Color(0xFF15803D)
-                                    : const Color(0xFF111827),
+                                    ? AppTheme.successColor
+                                    : AppTheme.textPrimary,
                               ),
                             ),
                             const SizedBox(height: 6),
                             Text(
                               step.description,
-                              style: TextStyle(
-                                color: const Color(0xFF111827).withOpacity(0.66),
+                              style: const TextStyle(
+                                color: AppTheme.textSecondary,
                                 height: 1.35,
                               ),
                             ),
@@ -965,8 +972,8 @@ class _DeliveryScreenState extends State<DeliveryScreen> {
         decoration: BoxDecoration(
           gradient: LinearGradient(
             colors: <Color>[
-              const Color(0xFF3A3985).withOpacity(0.9),
-              const Color(0xFF2563EB).withOpacity(0.88),
+              AppTheme.primaryDark.withOpacity(0.9),
+              AppTheme.primaryColor.withOpacity(0.88),
             ],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
@@ -985,7 +992,7 @@ class _DeliveryScreenState extends State<DeliveryScreen> {
                 color: Colors.white,
                 boxShadow: <BoxShadow>[
                   BoxShadow(
-                    color: const Color(0xFF2563EB).withOpacity(0.28),
+                    color: AppTheme.primaryColor.withOpacity(0.28),
                     blurRadius: 42,
                     offset: const Offset(0, 20),
                   ),
@@ -1003,8 +1010,8 @@ class _DeliveryScreenState extends State<DeliveryScreen> {
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                         colors: <Color>[
-                          Color(0xFF22C55E),
-                          Color(0xFF16A34A),
+                          AppTheme.successColor,
+                          AppTheme.successColor,
                         ],
                       ),
                     ),
@@ -1020,16 +1027,16 @@ class _DeliveryScreenState extends State<DeliveryScreen> {
                     style: TextStyle(
                       fontSize: 22,
                       fontWeight: FontWeight.w700,
-                      color: Color(0xFF111827),
+                      color: AppTheme.textPrimary,
                     ),
                   ),
                   const SizedBox(height: 8),
                   Text(
                     '${_lastSubmittedCustomer ?? 'Customer'} (${_lastSubmittedPartId ?? 'Part'}) marked as ${_lastSubmittedStatus ?? 'Pending'}.',
                     textAlign: TextAlign.center,
-                    style: TextStyle(
+                    style: const TextStyle(
                       fontSize: 14,
-                      color: Colors.black.withOpacity(0.6),
+                      color: AppTheme.textSecondary,
                     ),
                   ),
                   const SizedBox(height: 18),
@@ -1038,7 +1045,7 @@ class _DeliveryScreenState extends State<DeliveryScreen> {
                       setState(() => _showSuccess = false);
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF2563EB),
+                      backgroundColor: AppTheme.primaryColor,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(14),
                       ),
@@ -1078,7 +1085,7 @@ class _FormSectionTitle extends StatelessWidget {
       style: const TextStyle(
         fontSize: 18,
         fontWeight: FontWeight.w700,
-        color: Color(0xFF0F172A),
+        color: AppTheme.textPrimary,
       ),
     );
   }
@@ -1187,18 +1194,18 @@ class _GlassSelectField extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: Colors.black.withOpacity(0.08)),
-        color: Colors.white,
+        border: Border.all(color: AppTheme.borderColor),
+        color: AppTheme.surfaceColor,
       ),
       child: Row(
         children: <Widget>[
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: const Color(0xFF2563EB).withOpacity(0.12),
+              color: AppTheme.primaryColor.withOpacity(0.12),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: Icon(icon, color: const Color(0xFF2563EB), size: 20),
+            child: Icon(icon, color: AppTheme.primaryColor, size: 20),
           ),
           const SizedBox(width: 16),
           Expanded(
@@ -1207,8 +1214,8 @@ class _GlassSelectField extends StatelessWidget {
               children: <Widget>[
                 Text(
                   label,
-                  style: TextStyle(
-                    color: Colors.black.withOpacity(0.5),
+                  style: const TextStyle(
+                    color: AppTheme.textSecondary,
                     fontSize: 12,
                     fontWeight: FontWeight.w500,
                   ),
@@ -1219,7 +1226,7 @@ class _GlassSelectField extends StatelessWidget {
                   style: const TextStyle(
                     fontWeight: FontWeight.w700,
                     fontSize: 15,
-                    color: Color(0xFF0F172A),
+                    color: AppTheme.textPrimary,
                   ),
                 ),
               ],
@@ -1270,8 +1277,8 @@ class _AnimatedBackdropState extends State<_AnimatedBackdrop>
               child: _FrostedOrb(
                 diameter: 300,
                 colors: <Color>[
-                  const Color(0xFF6366F1).withOpacity(0.22),
-                  const Color(0xFF2563EB).withOpacity(0.08),
+                  AppTheme.primaryLight.withOpacity(0.22),
+                  AppTheme.primaryColor.withOpacity(0.08),
                 ],
               ),
             ),
@@ -1281,8 +1288,8 @@ class _AnimatedBackdropState extends State<_AnimatedBackdrop>
               child: _FrostedOrb(
                 diameter: 360,
                 colors: <Color>[
-                  const Color(0xFF22D3EE).withOpacity(0.18),
-                  const Color(0xFF2563EB).withOpacity(0.06),
+                  AppTheme.accentColor.withOpacity(0.18),
+                  AppTheme.primaryColor.withOpacity(0.06),
                 ],
               ),
             ),

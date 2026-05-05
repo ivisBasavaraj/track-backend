@@ -294,7 +294,7 @@ class _ModernUserDashboardState extends State<ModernUserDashboard>
                 child: Container(
                   width: 12,
                   height: 12,
-                  decoration: BoxDecoration(
+                  decoration: const BoxDecoration(
                     color: AppTheme.errorColor,
                     shape: BoxShape.circle,
                   ),
@@ -351,11 +351,15 @@ class _ModernUserDashboardState extends State<ModernUserDashboard>
   }
 
   Widget _buildStatsGrid() {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final crossAxisCount = screenWidth < 400 ? 1 : 2;
+    final aspectRatio = screenWidth < 400 ? 2.5 : 1.5;
+    
     return GridView.count(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      crossAxisCount: 2,
-      childAspectRatio: 1.5,
+      crossAxisCount: crossAxisCount,
+      childAspectRatio: aspectRatio,
       crossAxisSpacing: 16,
       mainAxisSpacing: 16,
       children: [
@@ -538,7 +542,7 @@ class _ModernUserDashboardState extends State<ModernUserDashboard>
                 const SizedBox(height: 8),
                 Row(
                   children: [
-                    Icon(
+                    const Icon(
                       Icons.access_time,
                       size: 14,
                       color: AppTheme.textSecondary,
@@ -551,7 +555,7 @@ class _ModernUserDashboardState extends State<ModernUserDashboard>
                       ),
                     ),
                     const SizedBox(width: 16),
-                    Icon(
+                    const Icon(
                       Icons.schedule,
                       size: 14,
                       color: AppTheme.textSecondary,
@@ -574,6 +578,9 @@ class _ModernUserDashboardState extends State<ModernUserDashboard>
   }
 
   Widget _buildQuickActions() {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isMobile = screenWidth < 600;
+    
     return ModernCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -585,44 +592,88 @@ class _ModernUserDashboardState extends State<ModernUserDashboard>
             ),
           ),
           const SizedBox(height: 16),
-          Wrap(
-            spacing: 12,
-            runSpacing: 12,
-            children: [
-              ModernButton(
-                text: 'Start Task',
-                icon: Icons.play_circle_filled,
-                onPressed: () {
-                  HapticFeedback.mediumImpact();
-                },
-                style: ModernButtonStyle.primary,
-              ),
-              ModernButton(
-                text: 'Report Issue',
-                icon: Icons.report_problem,
-                onPressed: () {
-                  HapticFeedback.lightImpact();
-                },
-                style: ModernButtonStyle.outline,
-              ),
-              ModernButton(
-                text: 'Break Time',
-                icon: Icons.coffee,
-                onPressed: () {
-                  HapticFeedback.lightImpact();
-                },
-                style: ModernButtonStyle.secondary,
-              ),
-              ModernButton(
-                text: 'End Shift',
-                icon: Icons.logout,
-                onPressed: () {
-                  HapticFeedback.lightImpact();
-                },
-                style: ModernButtonStyle.outline,
-              ),
-            ],
-          ),
+          isMobile
+              ? Column(
+                  children: [
+                    ModernButton(
+                      text: 'Start Task',
+                      icon: Icons.play_circle_filled,
+                      onPressed: () {
+                        HapticFeedback.mediumImpact();
+                      },
+                      style: ModernButtonStyle.primary,
+                      isExpanded: true,
+                    ),
+                    const SizedBox(height: 12),
+                    ModernButton(
+                      text: 'Report Issue',
+                      icon: Icons.report_problem,
+                      onPressed: () {
+                        HapticFeedback.lightImpact();
+                      },
+                      style: ModernButtonStyle.outline,
+                      isExpanded: true,
+                    ),
+                    const SizedBox(height: 12),
+                    ModernButton(
+                      text: 'Break Time',
+                      icon: Icons.coffee,
+                      onPressed: () {
+                        HapticFeedback.lightImpact();
+                      },
+                      style: ModernButtonStyle.secondary,
+                      isExpanded: true,
+                    ),
+                    const SizedBox(height: 12),
+                    ModernButton(
+                      text: 'End Shift',
+                      icon: Icons.logout,
+                      onPressed: () {
+                        HapticFeedback.lightImpact();
+                      },
+                      style: ModernButtonStyle.outline,
+                      isExpanded: true,
+                    ),
+                  ],
+                )
+              : Wrap(
+                  spacing: 12,
+                  runSpacing: 12,
+                  children: [
+                    ModernButton(
+                      text: 'Start Task',
+                      icon: Icons.play_circle_filled,
+                      onPressed: () {
+                        HapticFeedback.mediumImpact();
+                      },
+                      style: ModernButtonStyle.primary,
+                    ),
+                    ModernButton(
+                      text: 'Report Issue',
+                      icon: Icons.report_problem,
+                      onPressed: () {
+                        HapticFeedback.lightImpact();
+                      },
+                      style: ModernButtonStyle.outline,
+                    ),
+                    ModernButton(
+                      text: 'Break Time',
+                      icon: Icons.coffee,
+                      onPressed: () {
+                        HapticFeedback.lightImpact();
+                      },
+                      style: ModernButtonStyle.secondary,
+                    ),
+                    ModernButton(
+                      text: 'End Shift',
+                      icon: Icons.logout,
+                      onPressed: () {
+                        HapticFeedback.lightImpact();
+                      },
+                      style: ModernButtonStyle.outline,
+                    ),
+                  ],
+                ),
         ],
       ),
     );
@@ -638,9 +689,9 @@ class _ModernUserDashboardState extends State<ModernUserDashboard>
         maxChildSize: 0.9,
         minChildSize: 0.3,
         builder: (context, scrollController) => Container(
-          decoration: BoxDecoration(
+          decoration: const BoxDecoration(
             color: AppTheme.backgroundColor,
-            borderRadius: const BorderRadius.only(
+            borderRadius: BorderRadius.only(
               topLeft: Radius.circular(20),
               topRight: Radius.circular(20),
             ),

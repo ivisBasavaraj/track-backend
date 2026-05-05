@@ -208,7 +208,7 @@ class _ModernToolViewScreenState extends State<ModernToolViewScreen>
               color: AppTheme.primaryColor.withOpacity(0.1),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: Icon(
+            child: const Icon(
               Icons.precision_manufacturing_outlined,
               color: AppTheme.primaryColor,
               size: 24,
@@ -270,20 +270,11 @@ class _ModernToolViewScreenState extends State<ModernToolViewScreen>
       ),
     ];
 
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final screenWidth = constraints.maxWidth;
-        final bool isMobile = screenWidth < 600;
-        final bool isTablet = screenWidth < 1024;
-        final int crossAxisCount = isMobile ? 1 : isTablet ? 2 : 4;
-
-        return ModernDashboardStats(
-          stats: stats,
-          crossAxisCount: crossAxisCount,
-          crossAxisSpacing: isMobile ? 12 : isTablet ? 14 : 16,
-          mainAxisSpacing: isMobile ? 12 : isTablet ? 14 : 16,
-        );
-      },
+    return ModernDashboardStats(
+      stats: stats,
+      crossAxisCount: 2,
+      crossAxisSpacing: 16,
+      mainAxisSpacing: 16,
     );
   }
 
@@ -293,14 +284,14 @@ class _ModernToolViewScreenState extends State<ModernToolViewScreen>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
+          const Row(
             children: [
               Icon(
                 Icons.search_rounded,
                 color: AppTheme.primaryColor,
                 size: 20,
               ),
-              const SizedBox(width: 8),
+              SizedBox(width: 8),
               Text(
                 'Search Tools',
                 style: AppTheme.headlineMedium,
@@ -325,7 +316,7 @@ class _ModernToolViewScreenState extends State<ModernToolViewScreen>
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(
+                  const Icon(
                     Icons.info_outline,
                     color: AppTheme.infoColor,
                     size: 16,
@@ -360,7 +351,7 @@ class _ModernToolViewScreenState extends State<ModernToolViewScreen>
           color: AppTheme.successColor.withOpacity(0.1),
           borderRadius: BorderRadius.circular(8),
         ),
-        child: Icon(
+        child: const Icon(
           Icons.table_view_rounded,
           color: AppTheme.successColor,
           size: 20,
@@ -369,21 +360,28 @@ class _ModernToolViewScreenState extends State<ModernToolViewScreen>
       child: Column(
         children: [
           const SizedBox(height: 16),
-          _buildTableHeader(),
-          const SizedBox(height: 8),
-          AnimationLimiter(
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
             child: Column(
-              children: AnimationConfiguration.toStaggeredList(
-                duration: AppDurations.fast,
-                childAnimationBuilder: (widget) => SlideAnimation(
-                  verticalOffset: 20.0,
-                  child: FadeInAnimation(child: widget),
+              children: [
+                _buildTableHeader(),
+                const SizedBox(height: 8),
+                AnimationLimiter(
+                  child: Column(
+                    children: AnimationConfiguration.toStaggeredList(
+                      duration: AppDurations.fast,
+                      childAnimationBuilder: (widget) => SlideAnimation(
+                        verticalOffset: 20.0,
+                        child: FadeInAnimation(child: widget),
+                      ),
+                      children: _filteredToolData.take(50).map((tool) {
+                        final index = _filteredToolData.indexOf(tool);
+                        return _buildTableRow(tool, index);
+                      }).toList(),
+                    ),
+                  ),
                 ),
-                children: _filteredToolData.take(50).map((tool) {
-                  final index = _filteredToolData.indexOf(tool);
-                  return _buildTableRow(tool, index);
-                }).toList(),
-              ),
+              ],
             ),
           ),
           if (_filteredToolData.length > 50) ...[
@@ -397,7 +395,7 @@ class _ModernToolViewScreenState extends State<ModernToolViewScreen>
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(
+                  const Icon(
                     Icons.info_outline,
                     color: AppTheme.textSecondary,
                     size: 16,
@@ -431,7 +429,8 @@ class _ModernToolViewScreenState extends State<ModernToolViewScreen>
       ),
       child: Row(
         children: headers.map((header) {
-          return Expanded(
+          return SizedBox(
+            width: 120,
             child: Text(
               header.toUpperCase(),
               style: AppTheme.labelMedium.copyWith(
@@ -439,7 +438,7 @@ class _ModernToolViewScreenState extends State<ModernToolViewScreen>
                 fontWeight: FontWeight.w700,
                 letterSpacing: 0.5,
               ),
-              textAlign: TextAlign.center,
+              textAlign: TextAlign.left,
             ),
           );
         }).toList(),
@@ -459,11 +458,12 @@ class _ModernToolViewScreenState extends State<ModernToolViewScreen>
       ),
       child: Row(
         children: tool.values.map((value) {
-          return Expanded(
+          return SizedBox(
+            width: 120,
             child: Text(
               value?.toString() ?? '',
               style: AppTheme.bodyMedium,
-              textAlign: TextAlign.center,
+              textAlign: TextAlign.left,
               overflow: TextOverflow.ellipsis,
             ),
           );
@@ -534,7 +534,7 @@ class _ModernToolViewScreenState extends State<ModernToolViewScreen>
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(
+                const Icon(
                   Icons.error_outline_rounded,
                   color: AppTheme.errorColor,
                   size: 64,

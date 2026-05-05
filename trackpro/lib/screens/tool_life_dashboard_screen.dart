@@ -4,7 +4,7 @@ import '../services/tool_life_service.dart';
 import '../utils/api_client.dart';
 
 class ToolLifeDashboardScreen extends StatefulWidget {
-  const ToolLifeDashboardScreen({Key? key}) : super(key: key);
+  const ToolLifeDashboardScreen({super.key});
 
   @override
   State<ToolLifeDashboardScreen> createState() => _ToolLifeDashboardScreenState();

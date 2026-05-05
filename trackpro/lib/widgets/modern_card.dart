@@ -118,13 +118,17 @@ class _ModernCardState extends State<ModernCard>
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final defaultMargin = screenWidth < 600 ? 4.0 : 8.0;
+    final defaultPadding = screenWidth < 600 ? 12.0 : 16.0;
+    
     return AnimatedBuilder(
       animation: _animationController,
       builder: (context, child) {
         return Transform.scale(
           scale: _scaleAnimation.value,
           child: Container(
-            margin: widget.margin ?? const EdgeInsets.all(8),
+            margin: widget.margin ?? EdgeInsets.all(defaultMargin),
             child: Material(
               elevation: widget.enableShadow ? _elevationAnimation.value : 0,
               borderRadius: BorderRadius.circular(widget.borderRadius ?? 16),
@@ -158,7 +162,7 @@ class _ModernCardState extends State<ModernCard>
                         _buildHeader(),
                       Flexible(
                         child: Padding(
-                          padding: widget.padding ?? const EdgeInsets.all(16),
+                          padding: widget.padding ?? EdgeInsets.all(defaultPadding),
                           child: widget.child,
                         ),
                       ),
@@ -174,13 +178,16 @@ class _ModernCardState extends State<ModernCard>
   }
 
   Widget _buildHeader() {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final headerPadding = screenWidth < 600 ? 12.0 : 16.0;
+    
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+      padding: EdgeInsets.fromLTRB(headerPadding, headerPadding, headerPadding, 0),
       child: Row(
         children: [
           if (widget.leading != null) ...[
             widget.leading!,
-            const SizedBox(width: 12),
+            SizedBox(width: screenWidth < 600 ? 8 : 12),
           ],
           Expanded(
             child: Column(
@@ -189,20 +196,24 @@ class _ModernCardState extends State<ModernCard>
                 if (widget.title != null)
                   Text(
                     widget.title!,
-                    style: AppTheme.headlineMedium,
+                    style: AppTheme.headlineMedium.copyWith(
+                      fontSize: screenWidth < 600 ? 16 : null,
+                    ),
                   ),
                 if (widget.subtitle != null) ...[
                   const SizedBox(height: 4),
                   Text(
                     widget.subtitle!,
-                    style: AppTheme.bodySmall,
+                    style: AppTheme.bodySmall.copyWith(
+                      fontSize: screenWidth < 600 ? 11 : null,
+                    ),
                   ),
                 ],
               ],
             ),
           ),
           if (widget.trailing != null) ...[
-            const SizedBox(width: 12),
+            SizedBox(width: screenWidth < 600 ? 8 : 12),
             widget.trailing!,
           ],
         ],

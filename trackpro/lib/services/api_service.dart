@@ -4,11 +4,48 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:uuid/uuid.dart';
 
 class ApiService {
   static const String baseUrl = 'https://hkl-backend.onrender.com/api';
   static final supabase = Supabase.instance.client;
   
+  // Get unique device ID
+  static Future<String> getDeviceId() async {
+    final prefs = await SharedPreferences.getInstance();
+    String? deviceId = prefs.getString('device_id');
+    if (deviceId == null) {
+      deviceId = const Uuid().v4();
+      await prefs.setString('device_id', deviceId);
+    }
+    return deviceId;
+  }
+
+  // Update FCM token
+  static Future<Map<String, dynamic>> updateFcmToken(String token) async {
+    try {
+      final headers = await getHeaders();
+      final deviceId = await getDeviceId();
+      
+      final response = await http.post(
+        Uri.parse('$baseUrl/auth/fcm-token'),
+        headers: headers,
+        body: jsonEncode({
+          'token': token,
+          'deviceId': deviceId,
+          'deviceType': kIsWeb ? 'web' : (Platform.isAndroid ? 'android' : 'ios'),
+        }),
+      );
+      
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      } else {
+        return {'success': false, 'message': 'Failed to update FCM token'};
+      }
+    } catch (e) {
+      return {'success': false, 'message': 'Network error: $e'};
+    }
+  }
   // Get stored token
   static Future<String?> getToken() async {
     final prefs = await SharedPreferences.getInstance();
@@ -142,6 +179,49 @@ class ApiService {
         return {'success': true, 'user': data};
       } else {
         return {'success': false, 'message': data['message'] ?? 'Task assignment failed'};
+      }
+    } catch (e) {
+      return {'success': false, 'message': 'Network error: $e'};
+    }
+  }
+  
+  // Assign finishing task with details
+  static Future<Map<String, dynamic>> assignFinishingTask({
+    required String userId,
+    required String productName,
+    required String toolListName,
+    required dynamic diagramFile,
+  }) async {
+    try {
+      final token = await getToken();
+      final uri = Uri.parse('$baseUrl/users/$userId/assign-finishing');
+      
+      var request = http.MultipartRequest('PUT', uri);
+      request.headers['Authorization'] = 'Bearer $token';
+      
+      request.fields['productName'] = productName;
+      request.fields['toolListName'] = toolListName;
+      
+      if (diagramFile != null) {
+        if (kIsWeb && diagramFile.bytes != null) {
+          request.files.add(http.MultipartFile.fromBytes(
+            'diagram',
+            diagramFile.bytes!,
+            filename: diagramFile.name,
+          ));
+        } else if (!kIsWeb && diagramFile.path != null) {
+          request.files.add(await http.MultipartFile.fromPath('diagram', diagramFile.path!));
+        }
+      }
+      
+      final streamedResponse = await request.send();
+      final response = await http.Response.fromStream(streamedResponse);
+      final data = jsonDecode(response.body);
+      
+      if (response.statusCode == 200) {
+        return {'success': true, 'user': data};
+      } else {
+        return {'success': false, 'message': data['message'] ?? 'Finishing task assignment failed'};
       }
     } catch (e) {
       return {'success': false, 'message': 'Network error: $e'};
@@ -876,6 +956,46 @@ class ApiService {
       }
     } catch (e) {
       return {'success': false, 'message': 'Network error: $e'};
+    }
+  }
+
+  // Test FCM notification
+  static Future<Map<String, dynamic>> testNotification() async {
+    try {
+      final headers = await getHeaders();
+      final response = await http.post(
+        Uri.parse('$baseUrl/fcm/test-notification'),
+        headers: headers,
+      );
+      
+      final data = jsonDecode(response.body);
+      
+      if (response.statusCode == 200) {
+        return {'success': true, 'data': data};
+      } else {
+        return {'success': false, 'message': data['message'] ?? 'Test failed'};
+      }
+    } catch (e) {
+      return {'success': false, 'message': 'Network error: $e'};
+    }
+  }
+
+  // Get FCM status
+  static Future<Map<String, dynamic>> getFCMStatus() async {
+    try {
+      final headers = await getHeaders();
+      final response = await http.get(
+        Uri.parse('$baseUrl/fcm/fcm-status'),
+        headers: headers,
+      );
+      
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      } else {
+        throw Exception('Failed to get FCM status');
+      }
+    } catch (e) {
+      throw Exception('Network error: $e');
     }
   }
 }

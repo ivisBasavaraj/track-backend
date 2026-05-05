@@ -4,7 +4,7 @@ import '../models/tool_list_model.dart';
 import '../services/tools_service.dart';
 
 class MasterToolManagementScreen extends StatefulWidget {
-  const MasterToolManagementScreen({Key? key}) : super(key: key);
+  const MasterToolManagementScreen({super.key});
 
   @override
   State<MasterToolManagementScreen> createState() => _MasterToolManagementScreenState();
@@ -213,7 +213,7 @@ class ToolDetailsScreen extends StatefulWidget {
   final ToolList toolList;
   final VoidCallback onUpdate;
 
-  const ToolDetailsScreen({Key? key, required this.toolList, required this.onUpdate}) : super(key: key);
+  const ToolDetailsScreen({super.key, required this.toolList, required this.onUpdate});
 
   @override
   State<ToolDetailsScreen> createState() => _ToolDetailsScreenState();

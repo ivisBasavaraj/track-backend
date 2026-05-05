@@ -33,7 +33,7 @@ class _ToolStockManagementScreenState extends State<ToolStockManagementScreen>
   final int _pageSize = 20;
   
   ToolStockStatistics? _statistics;
-  bool _showLowStockOnly = false;
+  final bool _showLowStockOnly = false;
 
   final TextEditingController _searchController = TextEditingController();
 
@@ -256,9 +256,9 @@ class _ToolStockManagementScreenState extends State<ToolStockManagementScreen>
             Text('Current Stock: ${stock.currentStock} ${stock.unit}'),
             const SizedBox(height: 16),
             TextField(
-              decoration: InputDecoration(
+              decoration: const InputDecoration(
                 labelText: 'Quantity to Add',
-                border: const OutlineInputBorder(),
+                border: OutlineInputBorder(),
                 hintText: 'Enter quantity',
               ),
               keyboardType: TextInputType.number,
@@ -306,9 +306,9 @@ class _ToolStockManagementScreenState extends State<ToolStockManagementScreen>
             Text('Current Stock: ${stock.currentStock} ${stock.unit}'),
             const SizedBox(height: 16),
             TextField(
-              decoration: InputDecoration(
+              decoration: const InputDecoration(
                 labelText: 'Quantity to Remove',
-                border: const OutlineInputBorder(),
+                border: OutlineInputBorder(),
                 hintText: 'Enter quantity',
               ),
               keyboardType: TextInputType.number,
@@ -789,11 +789,15 @@ class _ToolStockManagementScreenState extends State<ToolStockManagementScreen>
 
   Widget _buildAppBar() {
     return SliverAppBar(
-      expandedHeight: 160,
+      expandedHeight: 180,
       floating: false,
       pinned: true,
       elevation: 0,
       backgroundColor: AppTheme.primaryColor,
+      leading: IconButton(
+        icon: const Icon(Icons.arrow_back),
+        onPressed: () => Navigator.pop(context),
+      ),
       actions: [
         IconButton(
           icon: const Icon(Icons.upload_file),
@@ -815,7 +819,7 @@ class _ToolStockManagementScreenState extends State<ToolStockManagementScreen>
           ),
           child: SafeArea(
             child: Padding(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.fromLTRB(16, 56, 16, 16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
@@ -829,7 +833,7 @@ class _ToolStockManagementScreenState extends State<ToolStockManagementScreen>
                   const SizedBox(height: 4),
                   Text(
                     'Manage and track tool inventory',
-                    style: AppTheme.bodyLarge.copyWith(
+                    style: AppTheme.bodyMedium.copyWith(
                       color: Colors.white,
                       fontWeight: FontWeight.bold,
                     ),
@@ -1169,8 +1173,9 @@ class _ToolStockManagementScreenState extends State<ToolStockManagementScreen>
           ),
           const SizedBox(height: 12),
           // Action buttons
-          Row(
-            mainAxisAlignment: MainAxisAlignment.end,
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
             children: [
               ModernButton(
                 text: 'Delete',
@@ -1178,21 +1183,18 @@ class _ToolStockManagementScreenState extends State<ToolStockManagementScreen>
                 onPressed: () => _showDeleteConfirmDialog(stock),
                 style: ModernButtonStyle.outline,
               ),
-              const SizedBox(width: 8),
               ModernButton(
                 text: 'Edit',
                 icon: Icons.edit,
                 onPressed: () => _showEditToolDialog(stock),
                 style: ModernButtonStyle.outline,
               ),
-              const SizedBox(width: 8),
               ModernButton(
                 text: 'Remove',
                 icon: Icons.remove,
                 onPressed: () => _showRemoveStockDialog(stock),
                 style: ModernButtonStyle.outline,
               ),
-              const SizedBox(width: 8),
               ModernButton(
                 text: 'Add',
                 icon: Icons.add,

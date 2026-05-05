@@ -5,7 +5,7 @@ import '../utils/api_client.dart';
 import 'package:intl/intl.dart';
 
 class ToolAlertsScreen extends StatefulWidget {
-  const ToolAlertsScreen({Key? key}) : super(key: key);
+  const ToolAlertsScreen({super.key});
 
   @override
   State<ToolAlertsScreen> createState() => _ToolAlertsScreenState();

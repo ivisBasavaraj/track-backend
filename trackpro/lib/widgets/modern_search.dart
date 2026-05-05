@@ -439,7 +439,7 @@ class _ModernFilterChipState extends State<ModernFilterChip>
                   ),
                   if (widget.selected) ...[
                     const SizedBox(width: 4),
-                    Icon(
+                    const Icon(
                       Icons.check_rounded,
                       color: Colors.white,
                       size: 16,

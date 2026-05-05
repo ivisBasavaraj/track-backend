@@ -3,31 +3,49 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 class AppTheme {
-  static const Color primaryColor = Color(0xFF6366F1);
-  static const Color primaryDark = Color(0xFF4F46E5);
-  static const Color primaryLight = Color(0xFF818CF8);
-  static const Color secondaryColor = Color(0xFF10B981);
-  static const Color accentColor = Color(0xFFF59E0B);
-  
-  // Background colors
-  static const Color backgroundColor = Color(0xFFFAFAFA);
-  static const Color surfaceColor = Colors.white;
-  static const Color cardColor = Colors.white;
-  
-  // Text colors
-  static const Color textPrimary = Color(0xFF111827);
-  static const Color textSecondary = Color(0xFF6B7280);
-  static const Color textTertiary = Color(0xFF9CA3AF);
-  
-  // Status colors
-  static const Color successColor = Color(0xFF10B981);
-  static const Color warningColor = Color(0xFFF59E0B);
-  static const Color errorColor = Color(0xFFEF4444);
-  static const Color infoColor = Color(0xFF3B82F6);
-  
-  // Border colors
-  static const Color borderColor = Color(0xFFE5E7EB);
-  static const Color dividerColor = Color(0xFFF3F4F6);
+  // Light Blue Accent Colors (Professional, Modern)
+  static const Color primaryColor = Color(0xFF3B82F6);    // Vibrant light blue
+  static const Color primaryDark = Color(0xFF1D4ED8);     // Darker blue for depth
+  static const Color primaryLight = Color(0xFF93C5FD);    // Lighter blue for accents
+  static const Color accentColor = Color(0xFF60A5FA);     // Medium blue for highlights
+
+  // Gray Neutral Colors (Professional, Structural)
+  static const Color backgroundColor = Color(0xFFF8FAFC);  // Lightest gray background
+  static const Color surfaceColor = Color(0xFFFFFFFF);     // Pure white surfaces
+  static const Color cardColor = Color(0xFFFFFFFF);        // White cards
+
+  // Gray Text Colors (Readability hierarchy)
+  static const Color textPrimary = Color(0xFF1E293B);      // Dark gray for primary text
+  static const Color textSecondary = Color(0xFF64748B);     // Medium gray for secondary text
+  static const Color textTertiary = Color(0xFF94A3B8);      // Light gray for tertiary text
+  static const Color textDisabled = Color(0xFFCBD5E1);      // Lightest gray for disabled states
+
+  // Status colors (maintaining semantic meaning with blue/gray palette)
+  static const Color successColor = Color(0xFF10B981);     // Green for success (kept for semantic clarity)
+  static const Color warningColor = Color(0xFFF59E0B);     // Amber for warnings (kept for semantic clarity)
+  static const Color errorColor = Color(0xFFEF4444);       // Red for errors (kept for semantic clarity)
+  static const Color infoColor = Color(0xFF3B82F6);        // Blue for info (matches primary)
+
+  // Secondary color for backward compatibility
+  static const Color secondaryColor = Color(0xFF64748B);   // Medium gray for secondary elements
+
+  // Gray Border Colors (Subtle, professional)
+  static const Color borderColor = Color(0xFFE2E8F0);      // Light gray borders
+  static const Color dividerColor = Color(0xFFF1F5F9);      // Very light gray dividers
+  static const Color hoverColor = Color(0xFFE0E7FF);        // Light blue hover effect
+  static const Color activeColor = Color(0xFFDBEAFE);       // Active state light blue
+
+  // Additional Gray Scale for UI elements
+  static const Color gray50 = Color(0xFFF8FAFC);
+  static const Color gray100 = Color(0xFFF1F5F9);
+  static const Color gray200 = Color(0xFFE2E8F0);
+  static const Color gray300 = Color(0xFFCBD5E1);
+  static const Color gray400 = Color(0xFF94A3B8);
+  static const Color gray500 = Color(0xFF64748B);
+  static const Color gray600 = Color(0xFF475569);
+  static const Color gray700 = Color(0xFF334155);
+  static const Color gray800 = Color(0xFF1E293B);
+  static const Color gray900 = Color(0xFF0F172A);
   
   static ThemeData get lightTheme {
     return ThemeData(
@@ -39,26 +57,26 @@ class AppTheme {
       colorScheme: const ColorScheme.light(
         primary: primaryColor,
         primaryContainer: primaryLight,
-        secondary: secondaryColor,
+        secondary: gray600,  // Using gray for secondary elements
         tertiary: accentColor,
         surface: surfaceColor,
         onSurface: textPrimary,
         error: errorColor,
       ),
       
-      appBarTheme: AppBarTheme(
+      appBarTheme: const AppBarTheme(
         elevation: 0,
         scrolledUnderElevation: 1,
         backgroundColor: surfaceColor,
         surfaceTintColor: Colors.transparent,
-        iconTheme: const IconThemeData(color: textPrimary),
-        titleTextStyle: const TextStyle(
+        iconTheme: IconThemeData(color: textPrimary),
+        titleTextStyle: TextStyle(
           color: textPrimary,
           fontSize: 18,
           fontWeight: FontWeight.w600,
           letterSpacing: -0.5,
         ),
-        systemOverlayStyle: const SystemUiOverlayStyle(
+        systemOverlayStyle: SystemUiOverlayStyle(
           statusBarColor: Colors.transparent,
           statusBarIconBrightness: Brightness.dark,
         ),
@@ -80,8 +98,8 @@ class AppTheme {
           elevation: 0,
           backgroundColor: primaryColor,
           foregroundColor: Colors.white,
-          disabledBackgroundColor: Color(0xFFE5E7EB),
-          disabledForegroundColor: Color(0xFF9CA3AF),
+          disabledBackgroundColor: const Color(0xFFE5E7EB),
+          disabledForegroundColor: const Color(0xFF9CA3AF),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
@@ -161,9 +179,9 @@ class AppTheme {
       ),
       
       chipTheme: ChipThemeData(
-        backgroundColor: Color(0xFFF3F4F6),
+        backgroundColor: const Color(0xFFF3F4F6),
         selectedColor: primaryLight,
-        disabledColor: Color(0xFFE5E7EB),
+        disabledColor: const Color(0xFFE5E7EB),
         deleteIconColor: textSecondary,
         labelStyle: const TextStyle(
           color: textPrimary,

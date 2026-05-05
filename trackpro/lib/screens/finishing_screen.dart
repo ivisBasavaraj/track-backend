@@ -45,17 +45,52 @@ class _FinishingScreenState extends State<FinishingScreen> {
   String _currentPauseRemarks = '';
 
   List<String> tools = [];
+  
+  // Assigned finishing data
+  String? _assignedProductName;
+  String? _assignedToolListName;
+  String? _assignedDiagramUrl;
+  bool _isLoadingAssignment = true;
 
   @override
   void initState() {
     super.initState();
     _startTimer();
-    _loadAvailableTools();
+    _loadAssignedFinishingData();
   }
   
   int? _extractToolIdFromToolName(String toolName) {
     final match = RegExp(r'^(\d+)').firstMatch(toolName);
     return match != null ? int.tryParse(match.group(1)!) : null;
+  }
+  
+  void _loadAssignedFinishingData() async {
+    try {
+      final userData = await ApiService.getCurrentUser();
+      if (userData['finishingAssignment'] != null) {
+        final assignment = userData['finishingAssignment'];
+        setState(() {
+          _assignedProductName = assignment['productName'];
+          _assignedToolListName = assignment['toolListName'];
+          _assignedDiagramUrl = assignment['diagramUrl'];
+          selectedTool = _assignedToolListName;
+          _isLoadingAssignment = false;
+        });
+        if (selectedTool != null) {
+          _loadToolData();
+        }
+      } else {
+        setState(() {
+          _isLoadingAssignment = false;
+        });
+        _loadAvailableTools();
+      }
+    } catch (e) {
+      setState(() {
+        _isLoadingAssignment = false;
+      });
+      _loadAvailableTools();
+    }
   }
   
   void _loadToolStatus() async {
@@ -490,7 +525,7 @@ class _FinishingScreenState extends State<FinishingScreen> {
             children: [
               Text('Recorded usage for $successCount tools'),
               const SizedBox(height: 10),
-              Text('Alerts:', style: const TextStyle(fontWeight: FontWeight.bold)),
+              const Text('Alerts:', style: TextStyle(fontWeight: FontWeight.bold)),
               ...alerts.map((alert) => Text('• $alert')),
             ],
           ),
@@ -616,11 +651,21 @@ class _FinishingScreenState extends State<FinishingScreen> {
             ],
 
             // Component Selection Section
-            _buildSectionTitle('Component Selection'),
+            _buildSectionTitle(_assignedProductName != null ? 'Assigned Component' : 'Component Selection'),
             const SizedBox(height: 15),
             
-            // Component Dropdown
-            if (tools.isEmpty)
+            // Display assigned product name
+            if (_assignedProductName != null) ...[
+              _buildReadOnlyField('Product Name', _assignedProductName!),
+              const SizedBox(height: 15),
+            ],
+            
+            // Display assigned tool list (read-only) or dropdown
+            if (_assignedToolListName != null)
+              _buildReadOnlyField('Tool List', _assignedToolListName!)
+            else if (_isLoadingAssignment)
+              const Center(child: CircularProgressIndicator())
+            else if (tools.isEmpty)
               const Center(
                 child: Padding(
                   padding: EdgeInsets.all(20),
@@ -720,9 +765,9 @@ class _FinishingScreenState extends State<FinishingScreen> {
             ],
           ),
           const SizedBox(height: 15),
-          Text(
+          const Text(
             'Pause Reason:',
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.bold,
               color: Color(0xFF3A3985),
@@ -951,6 +996,40 @@ class _FinishingScreenState extends State<FinishingScreen> {
         fontWeight: FontWeight.bold,
         color: Color(0xFF3A3985),
       ),
+    );
+  }
+  
+  Widget _buildReadOnlyField(String label, String value) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 12,
+            color: Colors.grey[600],
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        const SizedBox(height: 5),
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+          decoration: BoxDecoration(
+            color: Colors.grey[100],
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: Colors.grey[300]!),
+          ),
+          child: Text(
+            value,
+            style: const TextStyle(
+              fontSize: 14,
+              color: Colors.black87,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ),
+      ],
     );
   }
 

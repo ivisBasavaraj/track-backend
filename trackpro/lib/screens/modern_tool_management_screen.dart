@@ -332,13 +332,27 @@ class _ModernToolManagementScreenState extends State<ModernToolManagementScreen>
       ),
       child: Row(
         children: [
+          IconButton(
+            onPressed: () => Navigator.pop(context),
+            icon: Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: AppTheme.backgroundColor,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Icon(
+                Icons.arrow_back_ios_rounded,
+                size: 16,
+              ),
+            ),
+          ),
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
               color: AppTheme.primaryColor.withOpacity(0.1),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: Icon(
+            child: const Icon(
               Icons.build_circle_outlined,
               color: AppTheme.primaryColor,
               size: 24,
@@ -349,7 +363,7 @@ class _ModernToolManagementScreenState extends State<ModernToolManagementScreen>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
+                const Text(
                   'Tool Management',
                   style: AppTheme.displaySmall,
                 ),
@@ -378,7 +392,7 @@ class _ModernToolManagementScreenState extends State<ModernToolManagementScreen>
           color: AppTheme.successColor.withOpacity(0.1),
           borderRadius: BorderRadius.circular(8),
         ),
-        child: Icon(
+        child: const Icon(
           Icons.upload_file_rounded,
           color: AppTheme.successColor,
           size: 20,
@@ -440,7 +454,7 @@ class _ModernToolManagementScreenState extends State<ModernToolManagementScreen>
                 ),
                 child: Row(
                   children: [
-                    Icon(
+                    const Icon(
                       Icons.warning_amber_rounded,
                       color: AppTheme.warningColor,
                       size: 20,
@@ -586,7 +600,7 @@ class _ModernToolManagementScreenState extends State<ModernToolManagementScreen>
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(
+                  const Icon(
                     Icons.description_outlined,
                     color: AppTheme.successColor,
                     size: 16,
@@ -605,7 +619,7 @@ class _ModernToolManagementScreenState extends State<ModernToolManagementScreen>
               ),
             ),
           ] else ...[
-            Text(
+            const Text(
               'Choose CSV File',
               style: AppTheme.headlineMedium,
             ),
@@ -633,48 +647,94 @@ class _ModernToolManagementScreenState extends State<ModernToolManagementScreen>
   }
 
   Widget _buildUploadActions() {
-    return Row(
-      children: [
-        Expanded(
-          child: ModernButton(
-            text: 'Upload Tool List',
-            onPressed: _canUpload() ? _uploadToolList : null,
-            type: ModernButtonType.primary,
-            icon: Icons.upload_rounded,
-            isLoading: _isUploading,
-            height: 48,
-          ),
-        ),
-        const SizedBox(width: 12),
-        ModernButton(
-          text: 'Master Tools',
-          onPressed: () {
-            Navigator.push(
-              context,
-              PageRouteBuilder(
-                pageBuilder: (context, animation, secondaryAnimation) =>
-                    const MasterToolManagementScreen(),
-                transitionsBuilder: (context, animation, secondaryAnimation, child) {
-                  return SlideTransition(
-                    position: Tween<Offset>(
-                      begin: const Offset(1.0, 0.0),
-                      end: Offset.zero,
-                    ).animate(CurvedAnimation(
-                      parent: animation,
-                      curve: AppCurves.easeInOutQuart,
-                    )),
-                    child: child,
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isMobile = screenWidth < 600;
+    
+    return isMobile
+        ? Column(
+            children: [
+              ModernButton(
+                text: 'Upload Tool List',
+                onPressed: _canUpload() ? _uploadToolList : null,
+                type: ModernButtonType.primary,
+                icon: Icons.upload_rounded,
+                isLoading: _isUploading,
+                height: 48,
+                isExpanded: true,
+              ),
+              const SizedBox(height: 12),
+              ModernButton(
+                text: 'Master Tools',
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    PageRouteBuilder(
+                      pageBuilder: (context, animation, secondaryAnimation) =>
+                          const MasterToolManagementScreen(),
+                      transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                        return SlideTransition(
+                          position: Tween<Offset>(
+                            begin: const Offset(1.0, 0.0),
+                            end: Offset.zero,
+                          ).animate(CurvedAnimation(
+                            parent: animation,
+                            curve: AppCurves.easeInOutQuart,
+                          )),
+                          child: child,
+                        );
+                      },
+                      transitionDuration: AppDurations.medium,
+                    ),
                   );
                 },
-                transitionDuration: AppDurations.medium,
+                type: ModernButtonType.outline,
+                icon: Icons.settings_outlined,
+                isExpanded: true,
               ),
-            );
-          },
-          type: ModernButtonType.outline,
-          icon: Icons.settings_outlined,
-        ),
-      ],
-    );
+            ],
+          )
+        : Row(
+            children: [
+              Expanded(
+                child: ModernButton(
+                  text: 'Upload Tool List',
+                  onPressed: _canUpload() ? _uploadToolList : null,
+                  type: ModernButtonType.primary,
+                  icon: Icons.upload_rounded,
+                  isLoading: _isUploading,
+                  height: 48,
+                ),
+              ),
+              const SizedBox(width: 12),
+              ModernButton(
+                text: 'Master Tools',
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    PageRouteBuilder(
+                      pageBuilder: (context, animation, secondaryAnimation) =>
+                          const MasterToolManagementScreen(),
+                      transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                        return SlideTransition(
+                          position: Tween<Offset>(
+                            begin: const Offset(1.0, 0.0),
+                            end: Offset.zero,
+                          ).animate(CurvedAnimation(
+                            parent: animation,
+                            curve: AppCurves.easeInOutQuart,
+                          )),
+                          child: child,
+                        );
+                      },
+                      transitionDuration: AppDurations.medium,
+                    ),
+                  );
+                },
+                type: ModernButtonType.outline,
+                icon: Icons.settings_outlined,
+              ),
+            ],
+          );
   }
 
   Widget _buildExistingToolsSection() {
@@ -687,7 +747,7 @@ class _ModernToolManagementScreenState extends State<ModernToolManagementScreen>
           color: AppTheme.infoColor.withOpacity(0.1),
           borderRadius: BorderRadius.circular(8),
         ),
-        child: Icon(
+        child: const Icon(
           Icons.list_alt_rounded,
           color: AppTheme.infoColor,
           size: 20,
@@ -723,7 +783,7 @@ class _ModernToolManagementScreenState extends State<ModernToolManagementScreen>
       padding: const EdgeInsets.all(32),
       child: Column(
         children: [
-          Icon(
+          const Icon(
             Icons.search_off_rounded,
             color: AppTheme.textTertiary,
             size: 64,
@@ -773,7 +833,7 @@ class _ModernToolManagementScreenState extends State<ModernToolManagementScreen>
                         color: AppTheme.primaryColor.withOpacity(0.1),
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      child: Icon(
+                      child: const Icon(
                         Icons.precision_manufacturing_outlined,
                         color: AppTheme.primaryColor,
                         size: 24,
@@ -813,7 +873,7 @@ class _ModernToolManagementScreenState extends State<ModernToolManagementScreen>
                       ),
                     ),
                     const SizedBox(width: 12),
-                    Icon(
+                    const Icon(
                       Icons.arrow_forward_ios_rounded,
                       color: AppTheme.textTertiary,
                       size: 16,

@@ -42,6 +42,43 @@ class _ModernAdminDashboardState extends State<ModernAdminDashboard>
     DashboardTab('Analytics', Icons.analytics_outlined),
   ];
 
+  final List<String> _processTimelineLabels = const ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+
+  static const List<ProcessMetric> _adminProcessDefaults = <ProcessMetric>[
+    ProcessMetric(
+      name: 'Machining',
+      color: AppTheme.primaryColor,
+      throughput: 320,
+      quality: 98.2,
+      share: 32,
+      timeline: <double>[72, 78, 83, 88, 92, 95, 97],
+    ),
+    ProcessMetric(
+      name: 'Heat Treatment',
+      color: AppTheme.warningColor,
+      throughput: 210,
+      quality: 96.5,
+      share: 21,
+      timeline: <double>[55, 58, 60, 63, 66, 68, 70],
+    ),
+    ProcessMetric(
+      name: 'Quality Assurance',
+      color: AppTheme.successColor,
+      throughput: 150,
+      quality: 99.1,
+      share: 18,
+      timeline: <double>[82, 84, 86, 88, 90, 92, 94],
+    ),
+    ProcessMetric(
+      name: 'Assembly',
+      color: AppTheme.infoColor,
+      throughput: 280,
+      quality: 97.3,
+      share: 29,
+      timeline: <double>[68, 70, 73, 76, 79, 82, 85],
+    ),
+  ];
+
   @override
   void initState() {
     super.initState();
@@ -155,7 +192,7 @@ class _ModernAdminDashboardState extends State<ModernAdminDashboard>
 
   Widget _buildAppBar() {
     return SliverAppBar(
-      expandedHeight: 140,
+      expandedHeight: 120,
       floating: false,
       pinned: true,
       elevation: 0,
@@ -174,29 +211,32 @@ class _ModernAdminDashboardState extends State<ModernAdminDashboard>
           ),
           child: SafeArea(
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
                           children: [
                             Text(
                               'Welcome back,',
-                              style: AppTheme.bodyMedium.copyWith(
+                              style: AppTheme.bodySmall.copyWith(
                                 color: Colors.white.withOpacity(0.9),
                               ),
+                              overflow: TextOverflow.ellipsis,
                             ),
                             Text(
                               widget.adminName,
-                              style: AppTheme.headlineMedium.copyWith(
+                              style: AppTheme.bodyLarge.copyWith(
                                 color: Colors.white,
                                 fontWeight: FontWeight.bold,
                               ),
+                              overflow: TextOverflow.ellipsis,
                             ),
                           ],
                         ),
@@ -248,22 +288,22 @@ class _ModernAdminDashboardState extends State<ModernAdminDashboard>
         borderRadius: BorderRadius.circular(12),
       ),
       itemBuilder: (context) => [
-        PopupMenuItem(
+        const PopupMenuItem(
           value: 'profile',
           child: Row(
             children: [
               Icon(Icons.person_outline, color: AppTheme.textSecondary),
-              const SizedBox(width: 12),
+              SizedBox(width: 12),
               Text('Profile', style: AppTheme.bodyMedium),
             ],
           ),
         ),
-        PopupMenuItem(
+        const PopupMenuItem(
           value: 'settings',
           child: Row(
             children: [
               Icon(Icons.settings_outlined, color: AppTheme.textSecondary),
-              const SizedBox(width: 12),
+              SizedBox(width: 12),
               Text('Settings', style: AppTheme.bodyMedium),
             ],
           ),
@@ -273,7 +313,7 @@ class _ModernAdminDashboardState extends State<ModernAdminDashboard>
           value: 'logout',
           child: Row(
             children: [
-              Icon(Icons.logout, color: AppTheme.errorColor),
+              const Icon(Icons.logout, color: AppTheme.errorColor),
               const SizedBox(width: 12),
               Text(
                 'Logout',
@@ -290,61 +330,118 @@ class _ModernAdminDashboardState extends State<ModernAdminDashboard>
   }
 
   Widget _buildTabBar() {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isMobile = screenWidth < 600;
+    
     return Container(
       height: 60,
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Row(
-        children: _tabs.asMap().entries.map((entry) {
-          final index = entry.key;
-          final tab = entry.value;
-          final isSelected = _selectedTabIndex == index;
+      padding: EdgeInsets.symmetric(horizontal: isMobile ? 8 : 16),
+      child: isMobile
+          ? SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: _tabs.asMap().entries.map((entry) {
+                  final index = entry.key;
+                  final tab = entry.value;
+                  final isSelected = _selectedTabIndex == index;
 
-          return Expanded(
-            child: GestureDetector(
-              onTap: () {
-                setState(() {
-                  _selectedTabIndex = index;
-                });
-                HapticFeedback.lightImpact();
-              },
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                margin: const EdgeInsets.symmetric(horizontal: 4),
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                decoration: BoxDecoration(
-                  color: isSelected
-                      ? AppTheme.primaryColor.withOpacity(0.1)
-                      : Colors.transparent,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      tab.icon,
-                      color: isSelected
-                          ? AppTheme.primaryColor
-                          : AppTheme.textSecondary,
-                      size: 20,
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      tab.title,
-                      style: AppTheme.bodySmall.copyWith(
+                  return GestureDetector(
+                    onTap: () {
+                      setState(() {
+                        _selectedTabIndex = index;
+                      });
+                      HapticFeedback.lightImpact();
+                    },
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
+                      margin: const EdgeInsets.symmetric(horizontal: 4),
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      decoration: BoxDecoration(
                         color: isSelected
-                            ? AppTheme.primaryColor
-                            : AppTheme.textSecondary,
-                        fontWeight:
-                            isSelected ? FontWeight.w600 : FontWeight.normal,
+                            ? AppTheme.primaryColor.withOpacity(0.1)
+                            : Colors.transparent,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            tab.icon,
+                            color: isSelected
+                                ? AppTheme.primaryColor
+                                : AppTheme.textSecondary,
+                            size: 18,
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            tab.title,
+                            style: AppTheme.bodySmall.copyWith(
+                              color: isSelected
+                                  ? AppTheme.primaryColor
+                                  : AppTheme.textSecondary,
+                              fontWeight:
+                                  isSelected ? FontWeight.w600 : FontWeight.normal,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                  ],
-                ),
+                  );
+                }).toList(),
               ),
+            )
+          : Row(
+              children: _tabs.asMap().entries.map((entry) {
+                final index = entry.key;
+                final tab = entry.value;
+                final isSelected = _selectedTabIndex == index;
+
+                return Expanded(
+                  child: GestureDetector(
+                    onTap: () {
+                      setState(() {
+                        _selectedTabIndex = index;
+                      });
+                      HapticFeedback.lightImpact();
+                    },
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
+                      margin: const EdgeInsets.symmetric(horizontal: 4),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      decoration: BoxDecoration(
+                        color: isSelected
+                            ? AppTheme.primaryColor.withOpacity(0.1)
+                            : Colors.transparent,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            tab.icon,
+                            color: isSelected
+                                ? AppTheme.primaryColor
+                                : AppTheme.textSecondary,
+                            size: 20,
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            tab.title,
+                            style: AppTheme.bodySmall.copyWith(
+                              color: isSelected
+                                  ? AppTheme.primaryColor
+                                  : AppTheme.textSecondary,
+                              fontWeight:
+                                  isSelected ? FontWeight.w600 : FontWeight.normal,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                );
+              }).toList(),
             ),
-          );
-        }).toList(),
-      ),
     );
   }
 
@@ -353,8 +450,8 @@ class _ModernAdminDashboardState extends State<ModernAdminDashboard>
       opacity: _fadeAnimation,
       child: SlideTransition(
         position: _slideAnimation,
-        child: Padding(
-          padding: const EdgeInsets.all(24),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
           child: AnimationLimiter(
             child: Column(
               children: AnimationConfiguration.toStaggeredList(
@@ -365,12 +462,15 @@ class _ModernAdminDashboardState extends State<ModernAdminDashboard>
                 ),
                 children: [
                   _buildSearchSection(),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 16),
                   _buildStatsGrid(),
-                  const SizedBox(height: 32),
+                  const SizedBox(height: 16),
+                  _buildProcessAnalytics(),
+                  const SizedBox(height: 16),
                   _buildQuickActions(),
-                  const SizedBox(height: 32),
+                  const SizedBox(height: 16),
                   _buildRecentActivities(),
+                  const SizedBox(height: 16),
                 ],
               ),
             ),
@@ -403,7 +503,7 @@ class _ModernAdminDashboardState extends State<ModernAdminDashboard>
         final screenWidth = constraints.maxWidth;
         final bool isMobile = screenWidth < 600;
         final bool isTablet = screenWidth < 1024;
-        final int crossAxisCount = isMobile ? 1 : isTablet ? 2 : 4;
+        final int crossAxisCount = isMobile ? 2 : isTablet ? 2 : 4;
 
         return ModernDashboardStats(
           stats: [
@@ -450,7 +550,59 @@ class _ModernAdminDashboardState extends State<ModernAdminDashboard>
     );
   }
 
+  Widget _buildProcessAnalytics() {
+    return ProcessAnalyticsPanel(
+      title: 'Process Intelligence',
+      subtitle: 'Throughput and quality visibility for every production stage',
+      timelineLabels: _processTimelineLabels,
+      metrics: _getAdminProcessMetrics(),
+    );
+  }
+
+  List<ProcessMetric> _getAdminProcessMetrics() {
+    final parsed = _parseProcessMetrics(_dashboardData['processMetrics']);
+    return parsed.isNotEmpty ? parsed : _adminProcessDefaults;
+  }
+
+  List<ProcessMetric> _parseProcessMetrics(dynamic raw) {
+    if (raw is! List) {
+      return const [];
+    }
+    final palette = <Color>[
+      AppTheme.primaryColor,
+      AppTheme.successColor,
+      AppTheme.infoColor,
+      AppTheme.warningColor,
+      AppTheme.secondaryColor,
+    ];
+    final metrics = <ProcessMetric>[];
+    for (final entry in raw.asMap().entries) {
+      final value = entry.value;
+      if (value is! Map<String, dynamic>) {
+        continue;
+      }
+      final timelineRaw = value['timeline'] as List<dynamic>?;
+      final timeline = timelineRaw != null
+          ? timelineRaw.whereType<num>().map((number) => number.toDouble()).toList()
+          : <double>[];
+      metrics.add(
+        ProcessMetric(
+          name: value['name']?.toString() ?? 'Process ${entry.key + 1}',
+          color: palette[entry.key % palette.length],
+          throughput: (value['throughput'] as num?)?.toDouble() ?? 0,
+          quality: (value['quality'] as num?)?.toDouble() ?? 0,
+          share: (value['share'] as num?)?.toDouble() ?? 0,
+          timeline: timeline,
+        ),
+      );
+    }
+    return metrics;
+  }
+
   Widget _buildQuickActions() {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isMobile = screenWidth < 600;
+    
     final actions = [
       QuickAction(
         'Tool Management',
@@ -489,26 +641,39 @@ class _ModernAdminDashboardState extends State<ModernAdminDashboard>
             ),
           ),
           const SizedBox(height: 16),
-          GridView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
-              childAspectRatio: 3,
-              crossAxisSpacing: 16,
-              mainAxisSpacing: 16,
-            ),
-            itemCount: actions.length,
-            itemBuilder: (context, index) {
-              final action = actions[index];
-              return ModernButton(
-                text: action.title,
-                icon: action.icon,
-                onPressed: action.onPressed,
-                style: ModernButtonStyle.outline,
-              );
-            },
-          ),
+          isMobile
+              ? Column(
+                  children: actions.map((action) => Container(
+                    margin: const EdgeInsets.only(bottom: 12),
+                    child: ModernButton(
+                      text: action.title,
+                      icon: action.icon,
+                      onPressed: action.onPressed,
+                      style: ModernButtonStyle.outline,
+                      isExpanded: true,
+                    ),
+                  )).toList(),
+                )
+              : GridView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: screenWidth < 900 ? 2 : 4,
+                    childAspectRatio: 3,
+                    crossAxisSpacing: 16,
+                    mainAxisSpacing: 16,
+                  ),
+                  itemCount: actions.length,
+                  itemBuilder: (context, index) {
+                    final action = actions[index];
+                    return ModernButton(
+                      text: action.title,
+                      icon: action.icon,
+                      onPressed: action.onPressed,
+                      style: ModernButtonStyle.outline,
+                    );
+                  },
+                ),
         ],
       ),
     );
@@ -521,25 +686,11 @@ class _ModernAdminDashboardState extends State<ModernAdminDashboard>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Recent Activities',
-                style: AppTheme.headlineSmall.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              TextButton(
-                onPressed: () {},
-                child: Text(
-                  'View All',
-                  style: AppTheme.bodyMedium.copyWith(
-                    color: AppTheme.primaryColor,
-                  ),
-                ),
-              ),
-            ],
+          Text(
+            'Recent Activities',
+            style: AppTheme.headlineSmall.copyWith(
+              fontWeight: FontWeight.bold,
+            ),
           ),
           const SizedBox(height: 16),
           ...activities.map<Widget>((activity) => _buildActivityItem(activity)),
@@ -572,7 +723,7 @@ class _ModernAdminDashboardState extends State<ModernAdminDashboard>
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: AppTheme.surfaceColor,
         borderRadius: BorderRadius.circular(12),
@@ -581,31 +732,36 @@ class _ModernAdminDashboardState extends State<ModernAdminDashboard>
       child: Row(
         children: [
           Container(
-            width: 40,
-            height: 40,
+            width: 36,
+            height: 36,
             decoration: BoxDecoration(
               color: color.withOpacity(0.1),
               shape: BoxShape.circle,
             ),
-            child: Icon(icon, color: color, size: 20),
+            child: Icon(icon, color: color, size: 18),
           ),
-          const SizedBox(width: 16),
+          const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
                   activity['title'] ?? '',
-                  style: AppTheme.bodyMedium.copyWith(
+                  style: AppTheme.bodySmall.copyWith(
                     fontWeight: FontWeight.w500,
                   ),
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 2,
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 2),
                 Text(
                   activity['time'] ?? '',
-                  style: AppTheme.bodySmall.copyWith(
+                  style: const TextStyle(
                     color: AppTheme.textSecondary,
+                    fontSize: 11,
                   ),
+                  overflow: TextOverflow.ellipsis,
                 ),
               ],
             ),

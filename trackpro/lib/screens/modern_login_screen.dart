@@ -5,6 +5,7 @@ import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 
 import '../ui/app_theme.dart';
 import '../services/api_service.dart';
+import '../services/fcm_service.dart';
 import '../widgets/modern_button.dart';
 import '../widgets/modern_card.dart';
 import '../widgets/modern_loading.dart';
@@ -175,6 +176,20 @@ class _ModernLoginScreenState extends State<ModernLoginScreen>
       if (result['success']) {
         HapticFeedback.mediumImpact();
         final user = result['user'];
+
+        // Update FCM Token after successful login
+        try {
+          String? fcmToken = await ApiService.getToken(); // Wait, this is auth token
+          // I need to get FCM token from FCMService
+          String? fcmTokenReal = await FCMService.getToken();
+          if (fcmTokenReal != null) {
+            await ApiService.updateFcmToken(fcmTokenReal);
+            print('FCM Token updated on login');
+          }
+        } catch (fcmError) {
+          print('Failed to update FCM token on login: $fcmError');
+        }
+
         Widget dashboard;
         
         switch (user['role']) {
@@ -223,7 +238,7 @@ class _ModernLoginScreenState extends State<ModernLoginScreen>
       SnackBar(
         content: Row(
           children: [
-            Icon(Icons.error_outline, color: Colors.white),
+            const Icon(Icons.error_outline, color: Colors.white),
             const SizedBox(width: 12),
             Expanded(
               child: Text(
@@ -298,7 +313,7 @@ class _ModernLoginScreenState extends State<ModernLoginScreen>
         child: LayoutBuilder(
           builder: (context, constraints) {
             final screenWidth = MediaQuery.of(context).size.width;
-            final logoSize = screenWidth < 400 ? 80.0 : screenWidth < 600 ? 100.0 : 120.0;
+            final logoSize = screenWidth < 400 ? 70.0 : screenWidth < 600 ? 90.0 : 110.0;
             final iconSize = logoSize * 0.5;
 
             return Column(
@@ -338,12 +353,13 @@ class _ModernLoginScreenState extends State<ModernLoginScreen>
                     );
                   },
                 ),
-                const SizedBox(height: 24),
+                SizedBox(height: screenWidth < 400 ? 16 : 24),
                 Text(
                   'TrackPro',
                   style: AppTheme.headlineLarge.copyWith(
                     fontWeight: FontWeight.bold,
                     color: AppTheme.primaryColor,
+                    fontSize: screenWidth < 400 ? 28 : null,
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -352,7 +368,9 @@ class _ModernLoginScreenState extends State<ModernLoginScreen>
                   style: AppTheme.bodyMedium.copyWith(
                     color: AppTheme.textSecondary,
                     letterSpacing: 0.5,
+                    fontSize: screenWidth < 400 ? 12 : null,
                   ),
+                  textAlign: TextAlign.center,
                 ),
               ],
             );
@@ -363,10 +381,13 @@ class _ModernLoginScreenState extends State<ModernLoginScreen>
   }
 
   Widget _buildLoginCard() {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final cardPadding = screenWidth < 400 ? 20.0 : screenWidth < 600 ? 24.0 : 32.0;
+    
     return FadeTransition(
       opacity: _fadeAnimation,
       child: ModernCard(
-        padding: const EdgeInsets.all(32),
+        padding: EdgeInsets.all(cardPadding),
         child: Form(
           key: _formKey,
           child: Column(
@@ -426,23 +447,23 @@ class _ModernLoginScreenState extends State<ModernLoginScreen>
         ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: AppTheme.borderColor),
+          borderSide: const BorderSide(color: AppTheme.borderColor),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: AppTheme.borderColor),
+          borderSide: const BorderSide(color: AppTheme.borderColor),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: AppTheme.primaryColor, width: 2),
+          borderSide: const BorderSide(color: AppTheme.primaryColor, width: 2),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: AppTheme.errorColor, width: 2),
+          borderSide: const BorderSide(color: AppTheme.errorColor, width: 2),
         ),
         focusedErrorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: AppTheme.errorColor, width: 2),
+          borderSide: const BorderSide(color: AppTheme.errorColor, width: 2),
         ),
         filled: true,
         fillColor: AppTheme.surfaceColor,
@@ -488,23 +509,23 @@ class _ModernLoginScreenState extends State<ModernLoginScreen>
         ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: AppTheme.borderColor),
+          borderSide: const BorderSide(color: AppTheme.borderColor),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: AppTheme.borderColor),
+          borderSide: const BorderSide(color: AppTheme.borderColor),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: AppTheme.primaryColor, width: 2),
+          borderSide: const BorderSide(color: AppTheme.primaryColor, width: 2),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: AppTheme.errorColor, width: 2),
+          borderSide: const BorderSide(color: AppTheme.errorColor, width: 2),
         ),
         focusedErrorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: AppTheme.errorColor, width: 2),
+          borderSide: const BorderSide(color: AppTheme.errorColor, width: 2),
         ),
         filled: true,
         fillColor: AppTheme.surfaceColor,
@@ -563,7 +584,7 @@ class _ModernLoginScreenState extends State<ModernLoginScreen>
 
   Widget _buildLoginButton() {
     if (_isLoading) {
-      return ModernButton(
+      return const ModernButton(
         text: 'Signing In...',
         onPressed: null,
         isLoading: true,
@@ -580,6 +601,17 @@ class _ModernLoginScreenState extends State<ModernLoginScreen>
   Widget _buildFooter() {
     return Column(
       children: [
+        TextButton.icon(
+          onPressed: () {
+            Navigator.pushNamed(context, '/fcm-test');
+          },
+          icon: const Icon(Icons.notifications_active, size: 16),
+          label: const Text('Test FCM'),
+          style: TextButton.styleFrom(
+            foregroundColor: AppTheme.primaryColor,
+          ),
+        ),
+        const SizedBox(height: 8),
         Text(
           '© 2024 TrackPro. All rights reserved.',
           style: AppTheme.bodySmall.copyWith(

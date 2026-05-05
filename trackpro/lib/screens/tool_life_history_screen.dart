@@ -7,7 +7,7 @@ import 'package:intl/intl.dart';
 class ToolLifeHistoryScreen extends StatefulWidget {
   final int toolId;
 
-  const ToolLifeHistoryScreen({Key? key, required this.toolId}) : super(key: key);
+  const ToolLifeHistoryScreen({super.key, required this.toolId});
 
   @override
   State<ToolLifeHistoryScreen> createState() => _ToolLifeHistoryScreenState();

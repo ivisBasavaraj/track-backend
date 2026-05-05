@@ -321,9 +321,9 @@ class _LoginScreenState extends State<LoginScreen>
                 color: Colors.white.withOpacity(0.08),
                 borderRadius: BorderRadius.circular(30),
               ),
-              child: Row(
+              child: const Row(
                 mainAxisSize: MainAxisSize.min,
-                children: const [
+                children: [
                   Icon(Icons.auto_graph_rounded,
                       color: Colors.white70, size: 20),
                   SizedBox(width: 10),
@@ -391,12 +391,12 @@ class _LoginScreenState extends State<LoginScreen>
   }
 
   Widget _buildFormCard(bool isWide, bool isCompactHeight) {
-    final double cardPadding = isCompactHeight ? 22 : 28;
-    final double headerSize = isCompactHeight ? 24 : 28;
-    final double helperSize = isCompactHeight ? 13 : 14;
-    final double fieldSpacing = isCompactHeight ? 18 : 22;
-    final double betweenSections = isCompactHeight ? 16 : 24;
-    final double buttonHeight = isCompactHeight ? 50 : 54;
+    final double cardPadding = isCompactHeight ? 18 : 28;
+    final double headerSize = isCompactHeight ? 20 : 28;
+    final double helperSize = isCompactHeight ? 11 : 14;
+    final double fieldSpacing = isCompactHeight ? 12 : 22;
+    final double betweenSections = isCompactHeight ? 10 : 24;
+    final double buttonHeight = isCompactHeight ? 46 : 54;
 
     return ScaleTransition(
       scale: _cardScale,
@@ -417,10 +417,11 @@ class _LoginScreenState extends State<LoginScreen>
           ),
           child: ConstrainedBox(
             constraints: BoxConstraints(maxWidth: isWide ? 420 : 400),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
                 Text(
                   'Sign in',
                   style: TextStyle(
@@ -429,7 +430,7 @@ class _LoginScreenState extends State<LoginScreen>
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                const SizedBox(height: 6),
+                SizedBox(height: isCompactHeight ? 4 : 6),
                 Text(
                   'Enter your credentials to access dashboards.',
                   style: TextStyle(
@@ -439,7 +440,7 @@ class _LoginScreenState extends State<LoginScreen>
                 ),
                 SizedBox(height: betweenSections),
                 _buildLabel('Username'),
-                const SizedBox(height: 8),
+                SizedBox(height: isCompactHeight ? 6 : 8),
                 _buildTextField(
                   controller: _usernameController,
                   focusNode: _usernameFocusNode,
@@ -448,7 +449,7 @@ class _LoginScreenState extends State<LoginScreen>
                 ),
                 SizedBox(height: fieldSpacing),
                 _buildLabel('Password'),
-                const SizedBox(height: 8),
+                SizedBox(height: isCompactHeight ? 6 : 8),
                 _buildTextField(
                   controller: _passwordController,
                   focusNode: _passwordFocusNode,
@@ -456,20 +457,21 @@ class _LoginScreenState extends State<LoginScreen>
                   icon: Icons.lock_outline,
                   isPassword: true,
                 ),
-                const SizedBox(height: 12),
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: TextButton(
-                    onPressed: () {},
-                    style: TextButton.styleFrom(
-                      foregroundColor: const Color(0xFF4F46E5),
-                      textStyle: TextStyle(fontSize: helperSize),
-                      padding: EdgeInsets.zero,
+                SizedBox(height: isCompactHeight ? 6 : 12),
+                if (!isCompactHeight)
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: TextButton(
+                      onPressed: () {},
+                      style: TextButton.styleFrom(
+                        foregroundColor: const Color(0xFF4F46E5),
+                        textStyle: TextStyle(fontSize: helperSize),
+                        padding: EdgeInsets.zero,
+                      ),
+                      child: const Text('Forgot password?'),
                     ),
-                    child: const Text('Forgot password?'),
                   ),
-                ),
-                SizedBox(height: isCompactHeight ? 10 : 12),
+                SizedBox(height: isCompactHeight ? 6 : 12),
                 AnimatedBuilder(
                   animation: _controller,
                   builder: (context, child) {
@@ -496,16 +498,16 @@ class _LoginScreenState extends State<LoginScreen>
                         backgroundColor: const Color(0xFF4F46E5),
                         foregroundColor: Colors.white,
                         textStyle: TextStyle(
-                          fontSize: isCompactHeight ? 15 : 16,
+                          fontSize: isCompactHeight ? 14 : 16,
                           fontWeight: FontWeight.w600,
                         ),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(16),
                         ),
                       ),
-                      child: Row(
+                      child: const Row(
                         mainAxisAlignment: MainAxisAlignment.center,
-                        children: const [
+                        children: [
                           Text('Sign In'),
                           SizedBox(width: 8),
                           Icon(Icons.arrow_forward_rounded, size: 20),
@@ -532,7 +534,8 @@ class _LoginScreenState extends State<LoginScreen>
                     Container(width: 30, height: 1, color: Colors.grey[300]),
                   ],
                 ),
-              ],
+                ],
+              ),
             ),
           ),
         ),

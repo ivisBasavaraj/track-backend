@@ -212,7 +212,7 @@ class _ToolViewScreenState extends State<ToolViewScreen> {
               scrollDirection: Axis.horizontal,
               child: SingleChildScrollView(
                 child: DataTable(
-                  headingRowColor: MaterialStateProperty.all(Colors.blue.shade50),
+                  headingRowColor: WidgetStateProperty.all(Colors.blue.shade50),
                   dataRowHeight: 56,
                   columns: const [
                     DataColumn(label: Text('SL', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12))),
@@ -228,7 +228,7 @@ class _ToolViewScreenState extends State<ToolViewScreen> {
                     final tool = entry.value;
                     final isEven = entry.key % 2 == 0;
                     return DataRow(
-                      color: MaterialStateProperty.all(isEven ? Colors.white : Colors.grey.shade50),
+                      color: WidgetStateProperty.all(isEven ? Colors.white : Colors.grey.shade50),
                       cells: [
                         DataCell(Text('${tool['slNo'] ?? ''}', style: const TextStyle(fontWeight: FontWeight.w500))),
                         DataCell(Text('${tool['atcPocketNo'] ?? ''}')),

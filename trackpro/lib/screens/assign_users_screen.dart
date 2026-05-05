@@ -1,7 +1,9 @@
 // File: lib/screens/assign_users_screen.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
+import 'package:file_picker/file_picker.dart';
 import '../services/api_service.dart';
+import '../services/tools_service.dart';
 import '../ui/app_theme.dart';
 import '../widgets/modern_card.dart';
 
@@ -98,7 +100,7 @@ class _AssignUsersScreenState extends State<AssignUsersScreen> {
           backgroundColor: Colors.white,
           elevation: 0,
           leading: IconButton(
-            icon: Icon(Icons.arrow_back, color: AppTheme.primaryColor),
+            icon: const Icon(Icons.arrow_back, color: AppTheme.primaryColor),
             onPressed: () => Navigator.pop(context),
           ),
           title: Text(
@@ -109,14 +111,14 @@ class _AssignUsersScreenState extends State<AssignUsersScreen> {
             ),
           ),
         ),
-        body: Center(
+        body: const Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               CircularProgressIndicator(
                 valueColor: AlwaysStoppedAnimation<Color>(AppTheme.primaryColor),
               ),
-              const SizedBox(height: 16),
+              SizedBox(height: 16),
               Text(
                 'Loading users...',
                 style: AppTheme.subtitleStyle,
@@ -136,7 +138,7 @@ class _AssignUsersScreenState extends State<AssignUsersScreen> {
         backgroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: AppTheme.primaryColor),
+          icon: const Icon(Icons.arrow_back, color: AppTheme.primaryColor),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
@@ -163,7 +165,7 @@ class _AssignUsersScreenState extends State<AssignUsersScreen> {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(
+                const Icon(
                   Icons.people_outline,
                   color: AppTheme.primaryColor,
                   size: 16,
@@ -218,7 +220,7 @@ class _AssignUsersScreenState extends State<AssignUsersScreen> {
                             Container(
                               padding: const EdgeInsets.all(12),
                               decoration: BoxDecoration(
-                                gradient: LinearGradient(
+                                gradient: const LinearGradient(
                                   colors: [
                                     AppTheme.primaryColor,
                                     AppTheme.accentColor,
@@ -252,7 +254,7 @@ class _AssignUsersScreenState extends State<AssignUsersScreen> {
                                     ),
                                   ),
                                   const SizedBox(height: 4),
-                                  Text(
+                                  const Text(
                                     'Manage user task assignments efficiently',
                                     style: AppTheme.subtitleStyle,
                                   ),
@@ -327,7 +329,7 @@ class _AssignUsersScreenState extends State<AssignUsersScreen> {
                           padding: const EdgeInsets.all(24),
                           child: Column(
                             children: [
-                              Icon(
+                              const Icon(
                                 Icons.assignment_late_outlined,
                                 color: AppTheme.subtitleColor,
                                 size: 48,
@@ -341,7 +343,7 @@ class _AssignUsersScreenState extends State<AssignUsersScreen> {
                                 ),
                               ),
                               const SizedBox(height: 4),
-                              Text(
+                              const Text(
                                 'Start by assigning tasks to available users',
                                 style: AppTheme.subtitleStyle,
                                 textAlign: TextAlign.center,
@@ -416,7 +418,7 @@ class _AssignUsersScreenState extends State<AssignUsersScreen> {
                           padding: const EdgeInsets.all(24),
                           child: Column(
                             children: [
-                              Icon(
+                              const Icon(
                                 Icons.verified_outlined,
                                 color: AppTheme.successColor,
                                 size: 48,
@@ -430,7 +432,7 @@ class _AssignUsersScreenState extends State<AssignUsersScreen> {
                                 ),
                               ),
                               const SizedBox(height: 4),
-                              Text(
+                              const Text(
                                 'Great job! Everyone has a task',
                                 style: AppTheme.subtitleStyle,
                                 textAlign: TextAlign.center,
@@ -554,7 +556,7 @@ class _AssignUsersScreenState extends State<AssignUsersScreen> {
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(color: AppTheme.accentColor.withOpacity(0.3)),
                 ),
-                child: Icon(
+                child: const Icon(
                   Icons.remove_circle_outline,
                   color: AppTheme.accentColor,
                   size: 20,
@@ -630,7 +632,7 @@ class _AssignUsersScreenState extends State<AssignUsersScreen> {
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(
+                        const Icon(
                           Icons.schedule,
                           color: AppTheme.warningColor,
                           size: 12,
@@ -651,7 +653,7 @@ class _AssignUsersScreenState extends State<AssignUsersScreen> {
             ),
             Container(
               decoration: BoxDecoration(
-                gradient: LinearGradient(
+                gradient: const LinearGradient(
                   colors: [AppTheme.primaryColor, AppTheme.accentColor],
                 ),
                 borderRadius: BorderRadius.circular(8),
@@ -719,7 +721,7 @@ class _AssignUsersScreenState extends State<AssignUsersScreen> {
                       Container(
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          gradient: LinearGradient(
+                          gradient: const LinearGradient(
                             colors: [
                               AppTheme.primaryColor,
                               AppTheme.accentColor,
@@ -845,8 +847,12 @@ class _AssignUsersScreenState extends State<AssignUsersScreen> {
                       margin: const EdgeInsets.only(bottom: 8),
                       child: InkWell(
                         onTap: () {
-                          _assignTask(user, taskName);
                           Navigator.of(context).pop();
+                          if (taskName == 'Finishing') {
+                            _showFinishingAssignmentDialog(user);
+                          } else {
+                            _assignTask(user, taskName);
+                          }
                         },
                         borderRadius: BorderRadius.circular(12),
                         child: ModernCard(
@@ -899,7 +905,7 @@ class _AssignUsersScreenState extends State<AssignUsersScreen> {
                                   ),
                                 ),
                                 const SizedBox(width: 12),
-                                Icon(
+                                const Icon(
                                   Icons.arrow_forward_ios,
                                   color: AppTheme.subtitleColor,
                                   size: 16,
@@ -955,7 +961,7 @@ class _AssignUsersScreenState extends State<AssignUsersScreen> {
           SnackBar(
             content: Row(
               children: [
-                Icon(
+                const Icon(
                   Icons.check_circle,
                   color: Colors.white,
                   size: 20,
@@ -1011,7 +1017,7 @@ class _AssignUsersScreenState extends State<AssignUsersScreen> {
           SnackBar(
             content: Row(
               children: [
-                Icon(
+                const Icon(
                   Icons.info,
                   color: Colors.white,
                   size: 20,
@@ -1051,6 +1057,252 @@ class _AssignUsersScreenState extends State<AssignUsersScreen> {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(10),
           ),
+        ),
+      );
+    }
+  }
+
+  void _showFinishingAssignmentDialog(User user) {
+    showDialog(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        final productController = TextEditingController();
+        PlatformFile? diagramFile;
+        String? toolListName;
+        List<dynamic> availableToolLists = [];
+        bool isLoadingTools = true;
+
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            if (isLoadingTools) {
+              ToolsService().getAllToolLists(limit: 100).then((tools) {
+                if (context.mounted) {
+                  setDialogState(() {
+                    availableToolLists = tools.map((t) => {'toolName': t.toolName}).toList();
+                    isLoadingTools = false;
+                  });
+                }
+              }).catchError((e) {
+                if (context.mounted) {
+                  setDialogState(() {
+                    isLoadingTools = false;
+                  });
+                }
+              });
+            }
+            return Dialog(
+              backgroundColor: Colors.transparent,
+              insetPadding: const EdgeInsets.all(20),
+              child: ModernCard(
+                child: Container(
+                  padding: const EdgeInsets.all(24),
+                  constraints: const BoxConstraints(maxWidth: 500, maxHeight: 600),
+                  child: SingleChildScrollView(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                gradient: const LinearGradient(colors: [AppTheme.primaryColor, AppTheme.accentColor]),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: const Icon(Icons.check_circle_outlined, color: Colors.white, size: 24),
+                            ),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text('Assign Finishing Task', style: AppTheme.headingStyle.copyWith(fontSize: 18, color: AppTheme.primaryColor)),
+                                  Text('to ${user.name}', style: AppTheme.subtitleStyle),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 24),
+                        Text('Product Name', style: AppTheme.headingStyle.copyWith(fontSize: 14, color: AppTheme.primaryColor)),
+                        const SizedBox(height: 8),
+                        TextField(
+                          controller: productController,
+                          decoration: const InputDecoration(
+                            hintText: 'Enter product name',
+                            prefixIcon: Icon(Icons.inventory_2_outlined, color: AppTheme.primaryColor),
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+                        Text('Diagram (PDF/Image)', style: AppTheme.headingStyle.copyWith(fontSize: 14, color: AppTheme.primaryColor)),
+                        const SizedBox(height: 8),
+                        InkWell(
+                          onTap: () async {
+                            FilePickerResult? result = await FilePicker.platform.pickFiles(
+                              type: FileType.any,
+                              allowMultiple: false,
+                            );
+                            if (result != null) {
+                              setDialogState(() {
+                                diagramFile = result.files.single;
+                              });
+                            }
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              border: Border.all(color: AppTheme.borderColor),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Row(
+                              children: [
+                                Icon(
+                                  diagramFile != null 
+                                    ? (diagramFile!.name.endsWith('.pdf') ? Icons.picture_as_pdf : Icons.image)
+                                    : Icons.upload_file,
+                                  color: diagramFile != null ? AppTheme.successColor : AppTheme.textSecondary
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Text(
+                                    diagramFile != null ? diagramFile!.name : 'Select PDF or Image file',
+                                    style: AppTheme.bodyStyle.copyWith(color: diagramFile != null ? AppTheme.textPrimary : AppTheme.textSecondary),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                                const Icon(Icons.upload_file, color: AppTheme.primaryColor, size: 20),
+                              ],
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+                        Text('Tool List', style: AppTheme.headingStyle.copyWith(fontSize: 14, color: AppTheme.primaryColor)),
+                        const SizedBox(height: 8),
+                        isLoadingTools
+                            ? const Center(child: CircularProgressIndicator())
+                            : availableToolLists.isEmpty
+                                ? const Text('No tool lists available', style: AppTheme.subtitleStyle)
+                                : DropdownButtonFormField<String>(
+                                    value: toolListName,
+                                    decoration: const InputDecoration(
+                                      hintText: 'Select tool list',
+                                      prefixIcon: Icon(Icons.build_outlined, color: AppTheme.primaryColor),
+                                    ),
+                                    items: availableToolLists.map((tool) {
+                                      return DropdownMenuItem<String>(
+                                        value: tool['toolName'],
+                                        child: Text(tool['toolName']),
+                                      );
+                                    }).toList(),
+                                    onChanged: (value) {
+                                      setDialogState(() {
+                                        toolListName = value;
+                                      });
+                                    },
+                                  ),
+                        const SizedBox(height: 24),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: TextButton(
+                                onPressed: () => Navigator.of(dialogContext).pop(),
+                                style: TextButton.styleFrom(
+                                  padding: const EdgeInsets.symmetric(vertical: 12),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                    side: const BorderSide(color: AppTheme.borderColor),
+                                  ),
+                                ),
+                                child: Text('Cancel', style: AppTheme.bodyStyle.copyWith(color: AppTheme.textSecondary)),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  gradient: const LinearGradient(colors: [AppTheme.primaryColor, AppTheme.accentColor]),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: ElevatedButton(
+                                  onPressed: () {
+                                    if (productController.text.isEmpty || diagramFile == null || toolListName == null) {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        const SnackBar(
+                                          content: Text('Please fill all fields'),
+                                          backgroundColor: AppTheme.errorColor,
+                                          behavior: SnackBarBehavior.floating,
+                                        ),
+                                      );
+                                      return;
+                                    }
+                                    Navigator.of(dialogContext).pop();
+                                    _assignFinishingTask(user, productController.text, diagramFile!, toolListName!);
+                                  },
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.transparent,
+                                    shadowColor: Colors.transparent,
+                                    padding: const EdgeInsets.symmetric(vertical: 12),
+                                  ),
+                                  child: const Text('Assign Task', style: TextStyle(color: Colors.white)),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  void _assignFinishingTask(User user, String product, PlatformFile diagramFile, String toolList) async {
+    try {
+      final result = await ApiService.assignFinishingTask(
+        userId: user.id,
+        productName: product,
+        toolListName: toolList,
+        diagramFile: diagramFile,
+      );
+      if (result['success']) {
+        setState(() {
+          user.assignedTask = 'Finishing';
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(Icons.check_circle, color: Colors.white, size: 20),
+                const SizedBox(width: 8),
+                Expanded(child: Text('Finishing task assigned to ${user.name}\nProduct: $product\nTool List: $toolList')),
+              ],
+            ),
+            backgroundColor: AppTheme.successColor,
+            duration: const Duration(seconds: 3),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed: ${result['message']}'),
+            backgroundColor: AppTheme.errorColor,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error: $e'),
+          backgroundColor: AppTheme.errorColor,
+          behavior: SnackBarBehavior.floating,
         ),
       );
     }

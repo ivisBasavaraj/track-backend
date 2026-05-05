@@ -8,6 +8,7 @@ import '../widgets/modern_card.dart';
 import '../widgets/modern_dashboard.dart';
 import '../widgets/modern_loading.dart';
 import '../widgets/modern_search.dart';
+import '../widgets/circular_stats_card.dart';
 import 'assign_users_screen.dart';
 import 'manage_users_screen.dart';
 import 'modern_tool_management_screen.dart';
@@ -35,7 +36,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
     _DashboardTab('Overview', Icons.dashboard_customize_outlined),
     _DashboardTab('Operations', Icons.precision_manufacturing_outlined),
     _DashboardTab('Team', Icons.people_alt_outlined),
-    _DashboardTab('Activity', Icons.timeline_outlined),
   ];
 
   @override
@@ -54,13 +54,15 @@ class _AdminDashboardState extends State<AdminDashboard> {
 
     try {
       final result = await ApiService.getDashboardStats();
+      print('Dashboard API Response: $result');
       if (!mounted) return;
       setState(() {
         _dashboardData = result;
         _isLoading = false;
         _hasError = false;
       });
-    } catch (_) {
+    } catch (e) {
+      print('Dashboard API Error: $e');
       if (!mounted) return;
       setState(() {
         _isLoading = false;
@@ -74,9 +76,9 @@ class _AdminDashboardState extends State<AdminDashboard> {
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      return Scaffold(
+      return const Scaffold(
         backgroundColor: AppTheme.backgroundColor,
-        body: const Center(child: ModernLoadingIndicator()),
+        body: Center(child: ModernLoadingIndicator()),
       );
     }
 
@@ -87,9 +89,9 @@ class _AdminDashboardState extends State<AdminDashboard> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.error_outline, color: AppTheme.errorColor, size: 48),
+              const Icon(Icons.error_outline, color: AppTheme.errorColor, size: 48),
               const SizedBox(height: 12),
-              Text(
+              const Text(
                 'Unable to load dashboard',
                 style: AppTheme.headlineMedium,
                 textAlign: TextAlign.center,
@@ -155,7 +157,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
 
     return SliverAppBar(
       pinned: true,
-      expandedHeight: 180,
+      expandedHeight: 250,
       elevation: 0,
       backgroundColor: AppTheme.primaryColor,
       flexibleSpace: FlexibleSpaceBar(
@@ -200,22 +202,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
                       ),
                     ),
                     _buildProfileButton(),
-                  ],
-                ),
-                const SizedBox(height: 24),
-                Row(
-                  children: [
-                    _buildSummaryChip(
-                      label: 'Total Units Today',
-                      value: totalUnits.toString(),
-                      icon: Icons.inventory_2_outlined,
-                    ),
-                    const SizedBox(width: 16),
-                    _buildSummaryChip(
-                      label: 'Quality Rate',
-                      value: '$qualityRate%',
-                      icon: Icons.verified_outlined,
-                    ),
                   ],
                 ),
               ],
@@ -331,8 +317,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
         return _buildOperationsTab(screenWidth);
       case 2:
         return _buildTeamTab(screenWidth);
-      case 3:
-        return _buildActivityTab(screenWidth);
       default:
         return const SizedBox.shrink();
     }
@@ -342,6 +326,13 @@ class _AdminDashboardState extends State<AdminDashboard> {
     final bool isTablet = screenWidth < 1024;
     final bool isMobile = screenWidth < 680;
     final double spacing = isMobile ? 18 : isTablet ? 22 : _sectionSpacing;
+    final operations = _dashboardData['operationsStatus'] as Map<String, dynamic>? ?? {};
+    
+    final incomingPerf = _asNum((operations['incomingInspection'] as Map<String, dynamic>?)?['performance'] ?? 0);
+    final finishingPerf = _asNum((operations['finishing'] as Map<String, dynamic>?)?['performance'] ?? 0);
+    final qualityPerf = _asNum((operations['qualityControl'] as Map<String, dynamic>?)?['performance'] ?? 0);
+    final deliveryPerf = _asNum((operations['delivery'] as Map<String, dynamic>?)?['performance'] ?? 0);
+    final total = incomingPerf + finishingPerf + qualityPerf + deliveryPerf;
 
     return AnimationLimiter(
       child: Column(
@@ -353,14 +344,44 @@ class _AdminDashboardState extends State<AdminDashboard> {
             child: FadeInAnimation(child: widget),
           ),
           children: [
+            CircularStatsCard(
+              title: 'Process Efficiency',
+              totalAmount: '${_calculateOverallEfficiency(operations).toStringAsFixed(1)}%',
+              totalLabel: 'Overall Efficiency',
+              segments: [
+                StatSegment(
+                  label: 'Incoming Inspection',
+                  value: '${incomingPerf.toStringAsFixed(0)}%',
+                  percentage: total > 0 ? (incomingPerf / total * 100) : 0,
+                  color: AppTheme.primaryColor,
+                ),
+                StatSegment(
+                  label: 'Finishing',
+                  value: '${finishingPerf.toStringAsFixed(0)}%',
+                  percentage: total > 0 ? (finishingPerf / total * 100) : 0,
+                  color: AppTheme.warningColor,
+                ),
+                StatSegment(
+                  label: 'Quality Control',
+                  value: '${qualityPerf.toStringAsFixed(0)}%',
+                  percentage: total > 0 ? (qualityPerf / total * 100) : 0,
+                  color: AppTheme.successColor,
+                ),
+                StatSegment(
+                  label: 'Delivery',
+                  value: '${deliveryPerf.toStringAsFixed(0)}%',
+                  percentage: total > 0 ? (deliveryPerf / total * 100) : 0,
+                  color: AppTheme.infoColor,
+                ),
+              ],
+            ),
+            SizedBox(height: spacing),
             ModernDashboardStats(
               stats: _buildStats(),
-              crossAxisCount: isMobile ? 1 : isTablet ? 2 : 4,
+              crossAxisCount: isMobile ? 2 : isTablet ? 2 : 4,
               crossAxisSpacing: isMobile ? 12 : isTablet ? 14 : 16,
               mainAxisSpacing: isMobile ? 12 : isTablet ? 14 : 16,
             ),
-            SizedBox(height: spacing),
-            _buildTeamOverviewCard(isMobile),
             SizedBox(height: spacing),
             _buildActivityList(limit: 4),
           ],
@@ -371,6 +392,8 @@ class _AdminDashboardState extends State<AdminDashboard> {
 
   Widget _buildOperationsTab(double screenWidth) {
     final operations = _buildOperationData();
+    final operationsStatus = _dashboardData['operationsStatus'] as Map<String, dynamic>? ?? {};
+    
     return AnimationLimiter(
       child: Column(
         children: AnimationConfiguration.toStaggeredList(
@@ -379,7 +402,28 @@ class _AdminDashboardState extends State<AdminDashboard> {
             verticalOffset: 24,
             child: FadeInAnimation(child: widget),
           ),
-          children: operations.map(_buildOperationCard).toList(),
+          children: [
+            // Debug info
+            if (operationsStatus.isEmpty)
+              Container(
+                padding: const EdgeInsets.all(16),
+                margin: const EdgeInsets.only(bottom: 16),
+                decoration: BoxDecoration(
+                  color: AppTheme.warningColor.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: AppTheme.warningColor),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('Debug: No operations data received from API', style: TextStyle(fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 8),
+                    Text('Dashboard keys: ${_dashboardData.keys.join(", ")}'),
+                  ],
+                ),
+              ),
+            ...operations.map(_buildOperationCard).toList(),
+          ],
         ),
       ),
     );
@@ -390,6 +434,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
     final activeUsers = _asNum(teamOverview['activeUsers']).toInt();
     final totalUsers = _asNum(teamOverview['totalUsers']).toInt();
     final efficiency = _asNum(teamOverview['efficiency']).toStringAsFixed(0);
+    final bool isMobile = screenWidth < 600;
 
     return AnimationLimiter(
       child: Column(
@@ -401,22 +446,30 @@ class _AdminDashboardState extends State<AdminDashboard> {
             child: FadeInAnimation(child: widget),
           ),
           children: [
-            _buildTeamOverviewCard(screenWidth < 680),
-            const SizedBox(height: _sectionSpacing),
             ModernCard(
               title: 'Team Activity',
               subtitle: 'Live workforce metrics',
               child: Column(
                 children: [
-                  Row(
-                    children: [
-                      Expanded(child: _buildStatTile('Active Users', activeUsers.toString(), Icons.supervised_user_circle)),
-                      const SizedBox(width: 16),
-                      Expanded(child: _buildStatTile('Total Users', totalUsers.toString(), Icons.manage_accounts)),
-                      const SizedBox(width: 16),
-                      Expanded(child: _buildStatTile('Efficiency', '$efficiency%', Icons.bolt_outlined)),
-                    ],
-                  ),
+                  isMobile
+                      ? Column(
+                          children: [
+                            _buildStatTile('Active Users', activeUsers.toString(), Icons.supervised_user_circle),
+                            const SizedBox(height: 12),
+                            _buildStatTile('Total Users', totalUsers.toString(), Icons.manage_accounts),
+                            const SizedBox(height: 12),
+                            _buildStatTile('Efficiency', '$efficiency%', Icons.bolt_outlined),
+                          ],
+                        )
+                      : Row(
+                          children: [
+                            Expanded(child: _buildStatTile('Active Users', activeUsers.toString(), Icons.supervised_user_circle)),
+                            const SizedBox(width: 16),
+                            Expanded(child: _buildStatTile('Total Users', totalUsers.toString(), Icons.manage_accounts)),
+                            const SizedBox(width: 16),
+                            Expanded(child: _buildStatTile('Efficiency', '$efficiency%', Icons.bolt_outlined)),
+                          ],
+                        ),
                   const SizedBox(height: 20),
                   ModernButton(
                     text: 'Add New User',
@@ -432,207 +485,6 @@ class _AdminDashboardState extends State<AdminDashboard> {
                     },
                   ),
                 ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildActivityTab(double screenWidth) {
-    final operations = _buildOperationData();
-
-    return AnimationLimiter(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: AnimationConfiguration.toStaggeredList(
-          duration: const Duration(milliseconds: 350),
-          childAnimationBuilder: (widget) => SlideAnimation(
-            verticalOffset: 24,
-            child: FadeInAnimation(child: widget),
-          ),
-          children: [
-            _buildProcessPerformanceSection(operations, screenWidth),
-            const SizedBox(height: _sectionSpacing),
-            _buildActivityList(),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildProcessPerformanceSection(List<_OperationCardData> operations, double screenWidth) {
-    final bool isTablet = screenWidth < 1024;
-    final bool isMobile = screenWidth < 680;
-    final int columns = isMobile ? 1 : isTablet ? 2 : 4;
-    final double aspectRatio = isMobile ? 2.4 : isTablet ? 1.4 : 1.2;
-    final double spacing = isMobile ? 12 : isTablet ? 14 : 18;
-
-    return GridView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      itemCount: operations.length,
-      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: columns,
-        crossAxisSpacing: spacing,
-        mainAxisSpacing: spacing,
-        childAspectRatio: aspectRatio,
-      ),
-      itemBuilder: (context, index) {
-        final operation = operations[index];
-        return AnimationConfiguration.staggeredGrid(
-          position: index,
-          columnCount: columns,
-          duration: const Duration(milliseconds: 400),
-          child: ScaleAnimation(
-            child: FadeInAnimation(
-              child: _buildProcessStatBlock(operation, isMobile),
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildProcessStatBlock(_OperationCardData operation, bool isMobile) {
-    final performance = _asNum(operation.data['performance']).clamp(0, 100);
-    final metrics = operation.data.entries
-        .where((entry) => entry.key.toString() != 'performance')
-        .map((metric) => MapEntry(
-              _formatKey(metric.key),
-              _formatValue(metric.value),
-            ))
-        .toList();
-    final highlight = metrics.isNotEmpty ? metrics.first : null;
-
-    return Container(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            operation.color.withOpacity(0.9),
-            operation.color.withOpacity(0.65),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(isMobile ? 20 : 24),
-        boxShadow: [
-          BoxShadow(
-            color: operation.color.withOpacity(0.25),
-            blurRadius: isMobile ? 16 : 24,
-            offset: const Offset(0, 12),
-          ),
-        ],
-      ),
-      child: Padding(
-        padding: EdgeInsets.all(isMobile ? 16 : 20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  width: isMobile ? 38 : 44,
-                  height: isMobile ? 38 : 44,
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(isMobile ? 12 : 14),
-                  ),
-                  child: Icon(operation.icon, color: Colors.white, size: isMobile ? 18 : 22),
-                ),
-                SizedBox(width: isMobile ? 12 : 14),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        operation.title,
-                        style: (isMobile ? AppTheme.headlineMedium : AppTheme.headlineSmall).copyWith(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      if (highlight != null)
-                        Padding(
-                          padding: const EdgeInsets.only(top: 4),
-                          child: Text(
-                            '${highlight.value} ${highlight.key}',
-                            style: AppTheme.bodySmall.copyWith(
-                              color: Colors.white.withOpacity(0.8),
-                            ),
-                          ),
-                        ),
-                    ],
-                  ),
-                ),
-                Text(
-                  '${performance.toStringAsFixed(0)}%',
-                  style: (isMobile ? AppTheme.headlineMedium : AppTheme.headlineSmall).copyWith(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ],
-            ),
-            SizedBox(height: isMobile ? 14 : 18),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(999),
-              child: LinearProgressIndicator(
-                value: performance / 100,
-                minHeight: isMobile ? 6 : 8,
-                backgroundColor: Colors.white.withOpacity(0.2),
-                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-              ),
-            ),
-            if (metrics.length > 1)
-              Padding(
-                padding: EdgeInsets.only(top: isMobile ? 14 : 18),
-                child: Wrap(
-                  spacing: 12,
-                  runSpacing: 12,
-                  children: metrics
-                      .skip(1)
-                      .map(
-                        (metric) => _buildProcessMetricPill(
-                          metric.key,
-                          metric.value,
-                          isMobile,
-                        ),
-                      )
-                      .toList(),
-                ),
-              ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildProcessMetricPill(String label, String value, bool isMobile) {
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: isMobile ? 12 : 14, vertical: isMobile ? 6 : 8),
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.18),
-        borderRadius: BorderRadius.circular(isMobile ? 10 : 12),
-      ),
-      child: RichText(
-        text: TextSpan(
-          children: [
-            TextSpan(
-              text: '$value  ',
-              style: AppTheme.bodyMedium.copyWith(
-                color: Colors.white,
-                fontWeight: FontWeight.w600,
-                fontSize: isMobile ? 13 : null,
-              ),
-            ),
-            TextSpan(
-              text: label,
-              style: AppTheme.bodySmall.copyWith(
-                color: Colors.white.withOpacity(0.8),
-                fontSize: isMobile ? 11 : null,
               ),
             ),
           ],
@@ -658,31 +510,21 @@ class _AdminDashboardState extends State<AdminDashboard> {
       subtitle: 'Live productivity snapshot',
       child: Column(
         children: [
-          if (isMobile)
-            Column(
-              children: [
-                for (var i = 0; i < metricWidgets.length; i++) ...[
-                  if (i != 0) const SizedBox(height: 12),
-                  metricWidgets[i],
-                ],
-              ],
-            )
-          else
-            Row(
-              children: [
-                Expanded(child: metricWidgets[0]),
-                const SizedBox(width: 12),
-                Expanded(child: metricWidgets[1]),
-                const SizedBox(width: 12),
-                Expanded(child: metricWidgets[2]),
-              ],
-            ),
+          Row(
+            children: [
+              Expanded(child: metricWidgets[0]),
+              const SizedBox(width: 10),
+              Expanded(child: metricWidgets[1]),
+              const SizedBox(width: 10),
+              Expanded(child: metricWidgets[2]),
+            ],
+          ),
           SizedBox(height: isMobile ? 16 : 20),
           LinearProgressIndicator(
             value: efficiency.clamp(0, 100) / 100,
             minHeight: isMobile ? 5 : 6,
             backgroundColor: AppTheme.borderColor,
-            valueColor: AlwaysStoppedAnimation<Color>(AppTheme.successColor),
+            valueColor: const AlwaysStoppedAnimation<Color>(AppTheme.successColor),
           ),
         ],
       ),
@@ -698,16 +540,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
     return ModernCard(
       title: 'Recent Activity',
       subtitle: limit != null ? 'Latest updates across operations' : 'Full activity timeline',
-      trailing: limit != null
-          ? TextButton(
-              onPressed: () {
-                setState(() {
-                  _selectedTabIndex = 3;
-                });
-              },
-              child: const Text('View All'),
-            )
-          : null,
+      trailing: null,
       child: LayoutBuilder(
         builder: (context, constraints) {
           final bool isCompact = constraints.maxWidth < 540;
@@ -884,7 +717,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
   }
 
   Widget _buildOperationCard(_OperationCardData operation) {
-    final performance = _asNum(operation.data['performance']).toDouble();
+    final performance = _asNum(operation.data['performance'] ?? 0).toDouble();
     final metrics = operation.data.entries
         .where((entry) => entry.key.toString() != 'performance')
         .map((entry) => MapEntry(_formatKey(entry.key), _formatValue(entry.value)))
@@ -952,22 +785,32 @@ class _AdminDashboardState extends State<AdminDashboard> {
 
   Widget _buildMetricPill(String label, String value, Color color, bool isMobile) {
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: isMobile ? 14 : 16, vertical: isMobile ? 12 : 14),
+      padding: EdgeInsets.symmetric(horizontal: isMobile ? 8 : 16, vertical: isMobile ? 10 : 14),
       decoration: BoxDecoration(
         color: color.withOpacity(0.08),
-        borderRadius: BorderRadius.circular(isMobile ? 14 : 16),
+        borderRadius: BorderRadius.circular(isMobile ? 12 : 16),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             value,
-            style: (isMobile ? AppTheme.headlineMedium : AppTheme.headlineLarge).copyWith(color: color, fontWeight: FontWeight.bold),
+            style: (isMobile ? AppTheme.headlineMedium : AppTheme.headlineLarge).copyWith(
+              color: color, 
+              fontWeight: FontWeight.bold,
+              fontSize: isMobile ? 18 : null,
+            ),
           ),
           SizedBox(height: isMobile ? 2 : 4),
           Text(
             label,
-            style: AppTheme.bodySmall.copyWith(color: AppTheme.textSecondary, fontSize: isMobile ? 12 : null),
+            style: AppTheme.bodySmall.copyWith(
+              color: AppTheme.textSecondary, 
+              fontSize: isMobile ? 10 : null,
+              fontWeight: isMobile ? FontWeight.w500 : null,
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
         ],
       ),
@@ -1028,22 +871,22 @@ class _AdminDashboardState extends State<AdminDashboard> {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       onSelected: _handleMenuSelection,
       itemBuilder: (context) => [
-        PopupMenuItem<String>(
+        const PopupMenuItem<String>(
           value: 'profile',
           child: Row(
             children: [
               Icon(Icons.person_outline, color: AppTheme.textSecondary),
-              const SizedBox(width: 12),
+              SizedBox(width: 12),
               Text('Profile', style: AppTheme.bodyMedium),
             ],
           ),
         ),
-        PopupMenuItem<String>(
+        const PopupMenuItem<String>(
           value: 'settings',
           child: Row(
             children: [
               Icon(Icons.settings_outlined, color: AppTheme.textSecondary),
-              const SizedBox(width: 12),
+              SizedBox(width: 12),
               Text('Settings', style: AppTheme.bodyMedium),
             ],
           ),
@@ -1053,7 +896,7 @@ class _AdminDashboardState extends State<AdminDashboard> {
           value: 'logout',
           child: Row(
             children: [
-              Icon(Icons.logout, color: AppTheme.errorColor),
+              const Icon(Icons.logout, color: AppTheme.errorColor),
               const SizedBox(width: 12),
               Text(
                 'Logout',
@@ -1238,6 +1081,15 @@ class _AdminDashboardState extends State<AdminDashboard> {
       return '${difference.inHours}h ago';
     }
     return '${difference.inDays}d ago';
+  }
+
+  double _calculateOverallEfficiency(Map<String, dynamic> operations) {
+    if (operations.isEmpty) return 0;
+    final incoming = _asNum((operations['incomingInspection'] as Map<String, dynamic>?)?['performance'] ?? 0);
+    final finishing = _asNum((operations['finishing'] as Map<String, dynamic>?)?['performance'] ?? 0);
+    final quality = _asNum((operations['qualityControl'] as Map<String, dynamic>?)?['performance'] ?? 0);
+    final delivery = _asNum((operations['delivery'] as Map<String, dynamic>?)?['performance'] ?? 0);
+    return (incoming + finishing + quality + delivery) / 4;
   }
 }
 

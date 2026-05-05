@@ -178,6 +178,10 @@ class _ModernButtonState extends State<ModernButton>
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final fontSize = screenWidth < 400 ? 13.0 : 14.0;
+    final iconSize = screenWidth < 400 ? 16.0 : 18.0;
+    
     Widget buttonChild = Row(
       mainAxisSize: widget.isExpanded ? MainAxisSize.max : MainAxisSize.min,
       mainAxisAlignment: MainAxisAlignment.center,
@@ -195,7 +199,7 @@ class _ModernButtonState extends State<ModernButton>
           if (widget.icon != null && widget.iconFirst) ...[
             Icon(
               widget.icon,
-              size: 18,
+              size: iconSize,
               color: _getForegroundColor(),
             ),
             const SizedBox(width: 8),
@@ -205,19 +209,21 @@ class _ModernButtonState extends State<ModernButton>
               widget.text,
               style: widget.textStyle ??
                   TextStyle(
-                    fontSize: 14,
+                    fontSize: fontSize,
                     fontWeight: FontWeight.w600,
                     letterSpacing: 0.25,
                     color: _getForegroundColor(),
                   ),
               textAlign: TextAlign.center,
+              overflow: TextOverflow.ellipsis,
+              maxLines: 1,
             ),
           ),
           if (widget.icon != null && !widget.iconFirst) ...[
             const SizedBox(width: 8),
             Icon(
               widget.icon,
-              size: 18,
+              size: iconSize,
               color: _getForegroundColor(),
             ),
           ],

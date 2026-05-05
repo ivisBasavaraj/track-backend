@@ -758,7 +758,7 @@ class _ToolManagementScreenState extends State<ToolManagementScreen> {
         child: SingleChildScrollView(
           scrollDirection: Axis.horizontal,
           child: DataTable(
-            headingRowColor: MaterialStateProperty.all(Colors.blue.shade700),
+            headingRowColor: WidgetStateProperty.all(Colors.blue.shade700),
             dataRowHeight: 64,
             columns: const [
               DataColumn(label: Text('Tool Name', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white))),
@@ -780,7 +780,7 @@ class _ToolManagementScreenState extends State<ToolManagementScreen> {
                   '${formattedUpdatedAt.year.toString()}';
 
               return DataRow(
-                color: MaterialStateProperty.all(
+                color: WidgetStateProperty.all(
                   index.isEven ? Colors.grey.shade50 : Colors.white,
                 ),
                 cells: [

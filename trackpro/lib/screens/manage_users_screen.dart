@@ -23,72 +23,7 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> with TickerProvid
   String _selectedRole = 'User';
   
   // Sample user data - in real app, this would come from a database
-  List<User> users = [
-    User(
-      id: '001',
-      name: 'John Smith',
-      username: 'john.smith',
-      role: 'Supervisor',
-      isActive: true,
-      todayTasks: [
-        Task('Incoming Inspection', 'Batch #IN-2024-098', 'Completed', AppTheme.successColor),
-        Task('Quality Control', 'Part ID: QC-2024-045', 'In Progress', AppTheme.warningColor),
-      ],
-      completedToday: 8,
-      totalAssigned: 12,
-    ),
-    User(
-      id: '002',
-      name: 'Sarah Johnson',
-      username: 'sarah.johnson',
-      role: 'User',
-      isActive: true,
-      todayTasks: [
-        Task('Finishing Operations', 'AMS-141 COLUMN', 'In Progress', AppTheme.primaryColor),
-        Task('Delivery Management', 'Order #DEL-445', 'Completed', AppTheme.successColor),
-        Task('Incoming Inspection', 'Component Check', 'Pending', AppTheme.subtitleColor),
-      ],
-      completedToday: 6,
-      totalAssigned: 9,
-    ),
-    User(
-      id: '003',
-      name: 'Mike Rodriguez',
-      username: 'mike.rodriguez',
-      role: 'User',
-      isActive: false,
-      todayTasks: [],
-      completedToday: 0,
-      totalAssigned: 0,
-    ),
-    User(
-      id: '004',
-      name: 'Emily Chen',
-      username: 'emily.chen',
-      role: 'Admin',
-      isActive: true,
-      todayTasks: [
-        Task('Management', 'Weekly Reports', 'In Progress', AppTheme.primaryColor),
-        Task('Quality Review', 'System Check', 'Completed', AppTheme.successColor),
-      ],
-      completedToday: 4,
-      totalAssigned: 6,
-    ),
-    User(
-      id: '005',
-      name: 'David Wilson',
-      username: 'david.wilson',
-      role: 'Supervisor',
-      isActive: true,
-      todayTasks: [
-        Task('Training', 'New Employee Orientation', 'Completed', AppTheme.successColor),
-        Task('Quality Control', 'Final Inspection', 'In Progress', AppTheme.warningColor),
-        Task('Documentation', 'Process Updates', 'Pending', AppTheme.subtitleColor),
-      ],
-      completedToday: 5,
-      totalAssigned: 8,
-    ),
-  ];
+  List<User> users = [];
 
   @override
   void initState() {
@@ -105,7 +40,7 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> with TickerProvid
         backgroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: AppTheme.primaryColor),
+          icon: const Icon(Icons.arrow_back, color: AppTheme.primaryColor),
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: Text(
@@ -188,7 +123,7 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> with TickerProvid
                         ),
                       ),
                       const SizedBox(height: 8),
-                      Text(
+                      const Text(
                         'Monitor team performance and manage user roles',
                         style: AppTheme.subtitleStyle,
                       ),
@@ -208,7 +143,7 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> with TickerProvid
                   Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      gradient: LinearGradient(
+                      gradient: const LinearGradient(
                         colors: [
                           AppTheme.primaryColor,
                           AppTheme.accentColor,
@@ -247,6 +182,8 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> with TickerProvid
     int totalUsers = users.length;
     int totalTasksCompleted = users.fold(0, (sum, user) => sum + user.completedToday);
     int totalTasksAssigned = users.fold(0, (sum, user) => sum + user.totalAssigned);
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isMobile = screenWidth < 600;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -256,7 +193,7 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> with TickerProvid
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                gradient: LinearGradient(
+                gradient: const LinearGradient(
                   colors: [
                     AppTheme.primaryColor,
                     AppTheme.accentColor,
@@ -271,11 +208,13 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> with TickerProvid
               ),
             ),
             const SizedBox(width: 12),
-            Text(
-              'Team Overview',
-              style: AppTheme.headingStyle.copyWith(
-                fontSize: 18,
-                color: AppTheme.primaryColor,
+            Expanded(
+              child: Text(
+                'Team Overview',
+                style: AppTheme.headingStyle.copyWith(
+                  fontSize: isMobile ? 16 : 18,
+                  color: AppTheme.primaryColor,
+                ),
               ),
             ),
           ],
@@ -426,11 +365,14 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> with TickerProvid
                     children: [
                       Row(
                         children: [
-                          Text(
-                            user.name,
-                            style: AppTheme.headingStyle.copyWith(
-                              fontSize: 16,
-                              color: AppTheme.primaryColor,
+                          Flexible(
+                            child: Text(
+                              user.name,
+                              style: AppTheme.headingStyle.copyWith(
+                                fontSize: 16,
+                                color: AppTheme.primaryColor,
+                              ),
+                              overflow: TextOverflow.ellipsis,
                             ),
                           ),
                           const SizedBox(width: 8),
@@ -462,36 +404,40 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> with TickerProvid
                     ],
                   ),
                 ),
+                const SizedBox(width: 8),
                 // Role Dropdown
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: AppTheme.primaryColor.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: AppTheme.primaryColor.withOpacity(0.2)),
-                  ),
-                  child: DropdownButtonHideUnderline(
-                    child: DropdownButton<String>(
-                      value: user.role,
-                      style: AppTheme.subtitleStyle.copyWith(fontSize: 12),
-                      onChanged: (String? newRole) {
-                        setState(() {
-                          user.role = newRole!;
-                        });
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text('${user.name}\'s role updated to $newRole'),
-                            backgroundColor: AppTheme.successColor,
-                            duration: const Duration(seconds: 2),
-                          ),
-                        );
-                      },
-                      items: _roles.map<DropdownMenuItem<String>>((String value) {
-                        return DropdownMenuItem<String>(
-                          value: value,
-                          child: Text(value),
-                        );
-                      }).toList(),
+                Flexible(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: AppTheme.primaryColor.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: AppTheme.primaryColor.withOpacity(0.2)),
+                    ),
+                    child: DropdownButtonHideUnderline(
+                      child: DropdownButton<String>(
+                        value: user.role,
+                        style: AppTheme.subtitleStyle.copyWith(fontSize: 12),
+                        isDense: true,
+                        onChanged: (String? newRole) {
+                          setState(() {
+                            user.role = newRole!;
+                          });
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('${user.name}\'s role updated to $newRole'),
+                              backgroundColor: AppTheme.successColor,
+                              duration: const Duration(seconds: 2),
+                            ),
+                          );
+                        },
+                        items: _roles.map<DropdownMenuItem<String>>((String value) {
+                          return DropdownMenuItem<String>(
+                            value: value,
+                            child: Text(value),
+                          );
+                        }).toList(),
+                      ),
                     ),
                   ),
                 ),
@@ -503,13 +449,16 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> with TickerProvid
             // Progress Bar
             Row(
               children: [
-                Text(
-                  'Today\'s Progress: ${user.completedToday}/${user.totalAssigned}',
-                  style: AppTheme.subtitleStyle.copyWith(
-                    fontWeight: FontWeight.w500,
+                Expanded(
+                  child: Text(
+                    'Today\'s Progress: ${user.completedToday}/${user.totalAssigned}',
+                    style: AppTheme.subtitleStyle.copyWith(
+                      fontWeight: FontWeight.w500,
+                    ),
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
-                const Spacer(),
+                const SizedBox(width: 8),
                 Text(
                   '${user.totalAssigned > 0 ? ((user.completedToday / user.totalAssigned) * 100).toInt() : 0}%',
                   style: AppTheme.headingStyle.copyWith(
@@ -613,28 +562,33 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> with TickerProvid
             child: Text(
               '${task.type}: ${task.description}',
               style: AppTheme.bodyStyle,
+              overflow: TextOverflow.ellipsis,
             ),
           ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  task.statusColor.withOpacity(0.1),
-                  task.statusColor.withOpacity(0.05),
-                ],
+          const SizedBox(width: 8),
+          Flexible(
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    task.statusColor.withOpacity(0.1),
+                    task.statusColor.withOpacity(0.05),
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: task.statusColor.withOpacity(0.3),
+                  width: 1,
+                ),
               ),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: task.statusColor.withOpacity(0.3),
-                width: 1,
-              ),
-            ),
-            child: Text(
-              task.status,
-              style: AppTheme.captionStyle.copyWith(
-                color: task.statusColor,
-                fontWeight: FontWeight.w600,
+              child: Text(
+                task.status,
+                style: AppTheme.captionStyle.copyWith(
+                  color: task.statusColor,
+                  fontWeight: FontWeight.w600,
+                ),
+                overflow: TextOverflow.ellipsis,
               ),
             ),
           ),
@@ -681,7 +635,7 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> with TickerProvid
                           Container(
                             padding: const EdgeInsets.all(12),
                             decoration: BoxDecoration(
-                              gradient: LinearGradient(
+                              gradient: const LinearGradient(
                                 colors: [
                                   AppTheme.accentColor,
                                   AppTheme.primaryColor,
@@ -715,7 +669,7 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> with TickerProvid
                                   ),
                                 ),
                                 const SizedBox(height: 4),
-                                Text(
+                                const Text(
                                   'Fill in the details below to add a new user to your team',
                                   style: AppTheme.subtitleStyle,
                                 ),
@@ -748,7 +702,7 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> with TickerProvid
                         children: [
                           Row(
                             children: [
-                              Icon(
+                              const Icon(
                                 Icons.badge_outlined,
                                 color: AppTheme.primaryColor,
                                 size: 20,
@@ -802,7 +756,7 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> with TickerProvid
                         width: double.infinity,
                         height: 50,
                         decoration: BoxDecoration(
-                          gradient: LinearGradient(
+                          gradient: const LinearGradient(
                             colors: [AppTheme.primaryColor, AppTheme.accentColor],
                           ),
                           borderRadius: BorderRadius.circular(12),
@@ -823,15 +777,15 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> with TickerProvid
                               borderRadius: BorderRadius.circular(12),
                             ),
                           ),
-                          child: Row(
+                          child: const Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              const Icon(
+                              Icon(
                                 Icons.person_add,
                                 color: Colors.white,
                                 size: 20,
                               ),
-                              const SizedBox(width: 8),
+                              SizedBox(width: 8),
                               Text(
                                 'Add Team Member',
                                 style: AppTheme.buttonTextStyle,
@@ -892,7 +846,7 @@ class _ManageUsersScreenState extends State<ManageUsersScreen> with TickerProvid
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: AppTheme.primaryColor, width: 2),
+              borderSide: const BorderSide(color: AppTheme.primaryColor, width: 2),
             ),
             contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
           ),
